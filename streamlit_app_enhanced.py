@@ -702,7 +702,6 @@ with main_tab1:
                         # Extract guidance from transcript
                         st.write("Extracting guidance from transcript...")
                         table = extract_transcript_guidance(transcript, ticker, client, model_id)
-                        st.write(f"Raw AI response: {table[:500]}..." if table and len(str(table)) > 500 else f"Raw AI response: {table}")
                         df = process_guidance_table(table, "Transcript")
                         if df is not None and not df.empty:
                             # Use SEC filing date if available, otherwise use quarter format
@@ -730,7 +729,6 @@ with main_tab1:
                             if transcript:
                                 st.write(f"Extracting guidance from {ticker} Q{quarter} {target_year} transcript...")
                                 table = extract_transcript_guidance(transcript, ticker, client, model_id)
-                                st.write(f"Raw AI response: {table[:500]}..." if table and len(str(table)) > 500 else f"Raw AI response: {table}")
                                 df = process_guidance_table(table, "Transcript")
                                 if df is not None and not df.empty:
                                     df["filing_date"] = f"{target_year}-Q{quarter}"
@@ -748,7 +746,6 @@ with main_tab1:
                 if transcript:
                     st.write("Extracting guidance from most recent transcript...")
                     table = extract_transcript_guidance(transcript, ticker, client, model_id)
-                    st.write(f"Raw AI response: {table[:500]}..." if table and len(str(table)) > 500 else f"Raw AI response: {table}")
                     df = process_guidance_table(table, "Transcript")
                     if df is not None and not df.empty:
                         # Use SEC filing date if available, otherwise "Most Recent"
