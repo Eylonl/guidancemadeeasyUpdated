@@ -553,11 +553,8 @@ def format_guidance_values(df):
                 cell_value = row.get(col)
                 # Handle N/A, null, empty, or non-numeric values by using original value
                 if pd.isnull(cell_value) or str(cell_value).strip().upper() in ['N/A', 'NA', 'NULL', 'TBD', '', '-']:
-                    # For qualitative guidance (non-numeric), use the value_or_range text
-                    if value_text and not any(char.isdigit() for char in value_text.replace('%', '').replace('$', '').replace(',', '').replace('.', '').replace('-', '').replace('(', '').replace(')', '')):
-                        formatted_df.at[idx, col] = value_text
-                    else:
-                        formatted_df.at[idx, col] = None
+                    # For qualitative guidance, show the value_or_range instead of NULL
+                    formatted_df.at[idx, col] = value_text if value_text.strip() else None
                 else:
                     try:
                         val = float(cell_value)
