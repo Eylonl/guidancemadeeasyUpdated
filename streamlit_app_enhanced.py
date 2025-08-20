@@ -718,7 +718,7 @@ with main_tab1:
                     years_back = int(year_input.strip())
                     current_year = datetime.now().year
                     
-                    for year_offset in range(years_back):
+                    for year_offset in range(years_back + 1):
                         target_year = current_year - year_offset
                         for quarter in [1, 2, 3, 4]:
                             transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, target_year)
