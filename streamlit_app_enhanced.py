@@ -925,6 +925,6 @@ if False:  # Disabled duplicate section
 st.markdown("---")
 st.markdown("**Tips:**")
 st.markdown("- Use specific quarters (e.g., 'Q1 2024') for targeted searches")
-st.markdown("- Check both SEC filings and transcripts for comprehensive guidance")
+st.markdown("- Check SEC filings, transcripts, and any user uploaded documents (ex. earning presentations) for comprehensive guidance")
 st.markdown("- The Excel download includes all extracted data with source attribution")
 
