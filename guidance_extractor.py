@@ -310,6 +310,8 @@ def standardize_metric_names(df):
         'reported eps': 'EPS (Reported)',
         'pro forma eps': 'EPS (Pro Forma)',
         'non-gaap eps': 'EPS (Non-GAAP)',
+        'non-gaap eps usd (non-gaap)': 'EPS (Non-GAAP)',
+        'eps (non-gaap)': 'EPS (Non-GAAP)',
         'gaap eps': 'EPS (GAAP)',
         
         # Operating metrics
@@ -551,7 +553,11 @@ def format_guidance_values(df):
                 cell_value = row.get(col)
                 # Handle N/A, null, empty, or non-numeric values by using original value
                 if pd.isnull(cell_value) or str(cell_value).strip().upper() in ['N/A', 'NA', 'NULL', 'TBD', '', '-']:
-                    formatted_df.at[idx, col] = value_text
+                    # For qualitative guidance (non-numeric), use the value_or_range text
+                    if value_text and not any(char.isdigit() for char in value_text.replace('%', '').replace('$', '').replace(',', '').replace('.', '').replace('-', '').replace('(', '').replace(')', '')):
+                        formatted_df.at[idx, col] = value_text
+                    else:
+                        formatted_df.at[idx, col] = None
                 else:
                     try:
                         val = float(cell_value)
