@@ -718,6 +718,10 @@ with main_tab1:
                     years_back = int(year_input.strip())
                     current_year = datetime.now().year
                     
+                    cutoff = datetime.now() - timedelta(days=(365 * years_back) + 91.25)
+                    st.write(f"Looking for transcripts from the past {years_back} years plus 1 quarter (from {cutoff.strftime('%Y-%m-%d')} to present)")
+                    
+                    # Get transcripts for the specified time period
                     for year_offset in range(years_back + 1):
                         target_year = current_year - year_offset
                         for quarter in [1, 2, 3, 4]:
