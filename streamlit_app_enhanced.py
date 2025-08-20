@@ -706,7 +706,8 @@ with main_tab1:
                         if df is not None and not df.empty:
                             # Use SEC filing date if available, otherwise use quarter format
                             df["filing_date"] = sec_filing_date if sec_filing_date else f"{year_num}-Q{quarter_num}"
-                            df["filing_url"] = "DefeatBeta Transcript"
+                            source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
+                            df["filing_url"] = f"{source} Transcript"
                             df["model_used"] = selected_model
                             all_results.append(df)
                             st.success(f"Guidance extracted from transcript.")

@@ -1,9 +1,11 @@
-import os
-import sys
 import streamlit as st
-from dotenv import load_dotenv
+import sys
+import io
+import requests
+import re
+from datetime import datetime
 
-# Fix Unicode encoding issue on Windows by redirecting stdout temporarily
+# Null writer to suppress stdout during imports
 class NullWriter:
     def write(self, txt): pass
     def flush(self): pass
@@ -16,6 +18,55 @@ try:
     from defeatbeta_api.client.duckdb_conf import Configuration
 finally:
     sys.stdout = original_stdout
+
+def fetch_transcript_apininjas(ticker, year=None, quarter=None):
+    """Fetch earnings transcript using APINinjas API as fallback"""
+    try:
+        # Get API key from Streamlit secrets
+        api_key = st.secrets.get("APININJAS_API_KEY")
+        if not api_key:
+            return None, "APINinjas API key not found in secrets", None
+        
+        # Format the query
+        if year and quarter:
+            # Convert quarter format
+            quarter_num = quarter.replace("Q", "") if quarter.startswith("Q") else quarter
+            query = f"{ticker} Q{quarter_num} {year} earnings call transcript"
+        else:
+            query = f"{ticker} earnings call transcript"
+        
+        # APINinjas API endpoint
+        url = "https://api.api-ninjas.com/v1/earningstranscript"
+        headers = {
+            'X-Api-Key': api_key
+        }
+        params = {
+            'ticker': ticker.upper()
+        }
+        
+        response = requests.get(url, headers=headers, params=params, timeout=30)
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data and 'transcript' in data:
+                transcript_text = data['transcript']
+                
+                # Create metadata
+                metadata = {
+                    'quarter': quarter or 'Latest',
+                    'year': year or datetime.now().year,
+                    'company': ticker.upper(),
+                    'source': 'APINinjas'
+                }
+                
+                return transcript_text, None, metadata
+            else:
+                return None, f"No transcript data returned from APINinjas for {ticker}", None
+        else:
+            return None, f"APINinjas API error: {response.status_code}", None
+            
+    except Exception as e:
+        return None, f"APINinjas error: {str(e)}", None
 
 # No longer using .env file - using Streamlit secrets instead
 
@@ -67,7 +118,9 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
                 return transcript_text.strip(), None, metadata
                 
             except ValueError as e:
-                return None, str(e), None
+                # Try APINinjas as fallback
+                st.write("DefeatBeta API failed, trying APINinjas fallback...")
+                return fetch_transcript_apininjas(ticker, year, quarter)
         else:
             # Get most recent transcript
             transcripts_list = transcripts.get_transcripts_list()
@@ -98,12 +151,11 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
             return transcript_text.strip(), None, metadata
             
     except Exception as e:
-        return None, f"Error fetching transcript with defeatbeta-api: {str(e)}", None
+        # Try APINinjas as fallback when DefeatBeta fails completely
+        st.write("DefeatBeta API unavailable, trying APINinjas fallback...")
+        return fetch_transcript_apininjas(ticker, year, quarter)
 
-# Legacy function for backward compatibility - now uses defeatbeta-api only
-def fetch_transcript_apininjas(ticker, year=None, quarter=None):
-    """Legacy function - now uses defeatbeta-api only"""
-    return fetch_transcript_defeatbeta(ticker, year, quarter)
+# This function is now defined above as the actual APINinjas implementation
 
 def get_transcript_for_quarter(ticker, quarter_num, year_num):
     """Get transcript for a specific quarter and year"""
