@@ -14,7 +14,7 @@ def extract_guidance(text, ticker, client, model_name):
 
 Return a structured table containing the following columns:
 
-- metric (preserve EXACT metric names from the text, including specific business segments like "Productivity and Business Processes revenue", "More Personal Computing revenue", "Intelligent Cloud revenue", "Azure revenue", "Office 365 Commercial revenue", "Windows revenue", "Xbox revenue", etc. IMPORTANT: If guidance mentions "constant currency" or "in constant currency", add "constant currency" to the metric name to distinguish it from regular guidance)
+- metric (preserve EXACT metric names from the text, including specific business segments like "Productivity and Business Processes revenue", "More Personal Computing revenue", "Intelligent Cloud revenue", "Azure revenue", "Office 365 Commercial revenue", "Windows revenue", "Xbox revenue", etc. CRITICAL: When guidance mentions "constant currency", "in constant currency", or similar currency-related qualifiers, append "constant currency" to the metric name. Example: "Non-GAAP EPS is expected to be $1.44 to $1.48 in constant currency" should become "Non-GAAP EPS constant currency", while "Non-GAAP EPS is expected to be $1.46 to $1.50" should remain "Non-GAAP EPS")
 - value_or_range (e.g. $1.5B–$1.6B or $2.05 or $(0.05) to $0.10 - EXACTLY as it appears in the text)
 - period (e.g. Q3 FY24, Full Year 2025)
 - period_type (MUST be either "Quarter" or "Full Year" based on the period text)
@@ -178,7 +178,7 @@ CRITICAL COMPLIANCE REQUIREMENT: Do NOT extract any forward-looking statements o
 
 Return a structured table containing the following columns:
 
-- metric (preserve EXACT metric names from the text, including specific business segments like "Productivity and Business Processes revenue", "More Personal Computing revenue", "Intelligent Cloud revenue", "Azure revenue", "Office 365 Commercial revenue", "Windows revenue", "Xbox revenue", etc. IMPORTANT: If guidance mentions "constant currency" or "in constant currency", add "constant currency" to the metric name to distinguish it from regular guidance)
+- metric (preserve EXACT metric names from the text, including specific business segments like "Productivity and Business Processes revenue", "More Personal Computing revenue", "Intelligent Cloud revenue", "Azure revenue", "Office 365 Commercial revenue", "Windows revenue", "Xbox revenue", etc. CRITICAL: When guidance mentions "constant currency", "in constant currency", or similar currency-related qualifiers, append "constant currency" to the metric name. Example: "Non-GAAP EPS is expected to be $1.44 to $1.48 in constant currency" should become "Non-GAAP EPS constant currency", while "Non-GAAP EPS is expected to be $1.46 to $1.50" should remain "Non-GAAP EPS")
 - value_or_range (e.g. $1.5B–$1.6B or $2.05 or $(0.05) to $0.10 - EXACTLY as it appears in the text)
 - period (e.g. Q3 FY24, Full Year 2025)
 - period_type (MUST be either "Quarter" or "Full Year" based on the period text)
