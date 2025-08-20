@@ -20,13 +20,25 @@ A powerful Streamlit application for financial analysis with earnings transcript
 
 ## Environment Variables
 
-Create a `.env` file with the following variables:
+Add these to your Streamlit Cloud secrets or local `.env` file:
 
-```env
-OPENAI_API_KEY=your_openai_api_key_here
-SUPABASE_URL=your_supabase_url_here
-SUPABASE_KEY=your_supabase_key_here
 ```
+OPENAI_API_KEY=your_openai_api_key_here
+APP_PASSWORD=your_secure_password_here
+SUPABASE_URL=your_supabase_url_here
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
+SUPABASE_BUCKET=documents
+SEC_USER_AGENT=EarningsExtractor/1.0 (+contact: your_email@domain.com)
+```
+
+### API Key Security
+
+The app now includes password protection for the hosted OpenAI API key:
+
+- **Option 1**: Enter the app password to use the hosted OpenAI key
+- **Option 2**: Check "Use my own OpenAI API key" and enter your own key
+
+This prevents unauthorized usage of your OpenAI credits while still allowing legitimate users access.
 
 ## Local Development
 

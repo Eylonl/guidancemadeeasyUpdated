@@ -62,14 +62,39 @@ st.set_page_config(page_title="Enhanced SEC 8-K & Transcript Guidance Extractor"
 st.title("Enhanced SEC 8-K & Transcript Guidance Extractor")
 st.markdown("**Extract guidance from SEC filings and Earnings Call Transcripts with AI.**")
 
-# Check Streamlit secrets
-try:
-    openai_key = st.secrets["OPENAI_API_KEY"]
-except KeyError:
-    st.error("OPENAI_API_KEY not found in Streamlit secrets")
-    st.stop()
+# API Key Management with Password Protection
+st.sidebar.header("🔐 API Configuration")
 
-# APINinja key no longer needed since we're using defeatbeta-api only
+# Password for using hosted API key
+app_password = st.sidebar.text_input("Enter app password to use hosted OpenAI key:", type="password", key="app_password")
+
+# Option to use own API key
+use_own_key = st.sidebar.checkbox("Use my own OpenAI API key instead")
+
+if use_own_key:
+    user_openai_key = st.sidebar.text_input("Enter your OpenAI API key:", type="password", key="user_openai_key")
+    if user_openai_key:
+        openai_key = user_openai_key
+    else:
+        st.error("Please enter your OpenAI API key to continue")
+        st.stop()
+else:
+    # Check password for hosted key
+    try:
+        hosted_key = st.secrets["OPENAI_API_KEY"]
+        correct_password = st.secrets.get("APP_PASSWORD", "guidance2025")  # Default password if not set
+        
+        if app_password == correct_password:
+            openai_key = hosted_key
+            st.sidebar.success("✅ Using hosted OpenAI key")
+        else:
+            if app_password:  # Only show error if they tried entering a password
+                st.sidebar.error("❌ Incorrect password")
+            st.error("Please enter the correct app password or use your own OpenAI API key")
+            st.stop()
+    except KeyError:
+        st.error("Hosted OpenAI key not configured. Please use your own API key.")
+        st.stop()
 
 
 # Create main tabs
