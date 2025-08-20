@@ -712,6 +712,30 @@ with main_tab1:
                             all_results.append(df)
                             st.success(f"Guidance extracted from transcript.")
                             st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
+            elif year_input.strip():
+                # Get transcripts for multiple quarters based on years back
+                try:
+                    years_back = int(year_input.strip())
+                    current_year = datetime.now().year
+                    
+                    for year_offset in range(years_back):
+                        target_year = current_year - year_offset
+                        for quarter in [1, 2, 3, 4]:
+                            transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, target_year)
+                            if transcript:
+                                st.write(f"Extracting guidance from {ticker} Q{quarter} {target_year} transcript...")
+                                table = extract_transcript_guidance(transcript, ticker, client, model_id)
+                                df = process_guidance_table(table, "Transcript")
+                                if df is not None and not df.empty:
+                                    df["filing_date"] = f"{target_year}-Q{quarter}"
+                                    source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
+                                    df["filing_url"] = f"{source} Transcript Q{quarter} {target_year}"
+                                    df["model_used"] = selected_model
+                                    all_results.append(df)
+                                    st.success(f"Guidance extracted from Q{quarter} {target_year} transcript.")
+                                    st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
+                except ValueError:
+                    st.error("Invalid year input. Must be a number.")
             else:
                 # Try to get most recent transcript
                 transcript, error, metadata = get_transcript_for_quarter(ticker, None, None)

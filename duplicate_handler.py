@@ -12,8 +12,8 @@ def detect_duplicates(df: pd.DataFrame) -> List[int]:
     
     duplicate_indices = []
     
-    # Group by metric and period only (not filing_date to catch duplicates across sources)
-    grouping_cols = ['metric', 'period']
+    # Group by metric, period, and filing_date to properly identify duplicates
+    grouping_cols = ['metric', 'period', 'filing_date']
     
     # Check if all required columns exist
     if not all(col in df.columns for col in grouping_cols):
