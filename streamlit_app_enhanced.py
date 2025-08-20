@@ -62,16 +62,14 @@ st.set_page_config(page_title="Enhanced SEC 8-K & Transcript Guidance Extractor"
 st.title("Enhanced SEC 8-K & Transcript Guidance Extractor")
 st.markdown("**Extract guidance from SEC filings and Earnings Call Transcripts with AI.**")
 
-# Check environment variables
-openai_key = os.getenv("OPENAI_API_KEY")
-apininjas_key = os.getenv("APININJAS_API_KEY")
-
-if not openai_key:
-    st.error("OPENAI_API_KEY not found in .env file")
+# Check Streamlit secrets
+try:
+    openai_key = st.secrets["OPENAI_API_KEY"]
+except KeyError:
+    st.error("OPENAI_API_KEY not found in Streamlit secrets")
     st.stop()
 
-if not apininjas_key:
-    st.warning("APININJAS_API_KEY not found in .env file - transcript extraction will be disabled")
+# APINinja key no longer needed since we're using defeatbeta-api only
 
 
 # Create main tabs
@@ -620,7 +618,7 @@ with main_tab1:
                 for date_str, acc, url in links:
                     st.write(f"Processing {url}")
                     try:
-                        headers = {"User-Agent": os.getenv('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
+                        headers = {"User-Agent": st.secrets.get('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
                         html = requests.get(url, headers=headers, timeout=30).text
                         soup = BeautifulSoup(html, "html.parser")
                         text = soup.get_text(" ", strip=True)

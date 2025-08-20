@@ -17,8 +17,7 @@ try:
 finally:
     sys.stdout = original_stdout
 
-# Load environment variables
-load_dotenv()
+# No longer using .env file - using Streamlit secrets instead
 
 def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
     """Fetch earnings transcript using defeatbeta-api only"""

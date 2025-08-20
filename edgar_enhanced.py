@@ -4,15 +4,11 @@ from datetime import datetime, timedelta
 import streamlit as st
 import os
 import re
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 def get_ticker_from_cik(cik):
     """Get ticker symbol from CIK for display purposes"""
     try:
-        headers = {'User-Agent': os.getenv('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
+        headers = {'User-Agent': st.secrets.get('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
         res = requests.get("https://www.sec.gov/files/company_tickers.json", headers=headers)
         res.raise_for_status()
         data = res.json()
@@ -26,7 +22,7 @@ def get_ticker_from_cik(cik):
 @st.cache_data(show_spinner=False)
 def lookup_cik(ticker):
     """Look up CIK from ticker symbol"""
-    headers = {'User-Agent': os.getenv('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
+    headers = {'User-Agent': st.secrets.get('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
     res = requests.get("https://www.sec.gov/files/company_tickers.json", headers=headers)
     res.raise_for_status()
     data = res.json()
@@ -37,7 +33,7 @@ def lookup_cik(ticker):
 def get_fiscal_year_end(ticker, cik):
     """Get the fiscal year end month for a company from SEC data"""
     try:
-        headers = {'User-Agent': os.getenv('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
+        headers = {'User-Agent': st.secrets.get('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
         url = f"https://data.sec.gov/submissions/CIK{cik}.json"
         resp = requests.get(url, headers=headers)
         resp.raise_for_status()
@@ -124,7 +120,7 @@ def get_fiscal_dates(ticker, quarter_num, year_num, fiscal_year_end_month, fisca
 
 def get_accessions(cik, ticker, years_back=None, specific_quarter=None):
     """General function for finding filings"""
-    headers = {'User-Agent': os.getenv('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
+    headers = {'User-Agent': st.secrets.get('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
     url = f"https://data.sec.gov/submissions/CIK{cik}.json"
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
@@ -285,7 +281,7 @@ def is_earnings_release(url, headers):
 def get_ex99_1_links(cik, accessions):
     """Enhanced function to find exhibit 99.1 files with better searching and earnings validation"""
     links = []
-    headers = {'User-Agent': os.getenv('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
+    headers = {'User-Agent': st.secrets.get('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
     for accession, date_str in accessions:
         accession_no_dashes = accession.replace('-', '')
         base_folder = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accession_no_dashes}/"

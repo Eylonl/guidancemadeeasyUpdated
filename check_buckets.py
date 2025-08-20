@@ -10,12 +10,13 @@ from supabase import create_client, Client
 load_dotenv()
 
 def main():
-    # Get Supabase credentials
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-    
-    if not url or not key:
-        print("ERROR: Missing Supabase credentials in .env file")
+    # Get Supabase credentials from Streamlit secrets
+    import streamlit as st
+    try:
+        url = st.secrets["SUPABASE_URL"]
+        key = st.secrets["SUPABASE_SERVICE_ROLE_KEY"]
+    except KeyError as e:
+        print(f"ERROR: Missing Supabase credential in Streamlit secrets: {e}")
         return
     
     # Create client

@@ -6,14 +6,13 @@ from dotenv import load_dotenv
 import pathlib
 
 def get_supabase_config():
-    # Load environment variables with absolute path
-    env_path = pathlib.Path(__file__).parent / '.env'
-    load_dotenv(dotenv_path=env_path, override=True)
+    """Get Supabase configuration from Streamlit secrets"""
+    import streamlit as st
     
     return {
-        "url": os.getenv("SUPABASE_URL", ""),
-        "key": os.getenv("SUPABASE_SERVICE_ROLE_KEY", ""),
-        "bucket": os.getenv("SUPABASE_BUCKET", "documents")  # Changed default bucket name
+        "url": st.secrets.get("SUPABASE_URL", ""),
+        "key": st.secrets.get("SUPABASE_SERVICE_ROLE_KEY", ""),
+        "bucket": st.secrets.get("SUPABASE_BUCKET", "documents")
     }
 
 def get_client() -> Client:
