@@ -311,6 +311,7 @@ def standardize_metric_names(df):
         'pro forma eps': 'EPS (Pro Forma)',
         'non-gaap eps': 'EPS (Non-GAAP)',
         'non-gaap eps usd (non-gaap)': 'EPS (Non-GAAP)',
+        'non-gaap eps q1 range usd (non-gaap)': 'EPS (Non-GAAP)',
         'eps (non-gaap)': 'EPS (Non-GAAP)',
         'gaap eps': 'EPS (GAAP)',
         
@@ -510,27 +511,31 @@ def standardize_metric_names(df):
     for idx, row in df.iterrows():
         original_metric = str(row.get('metric', '')).strip()
         
-        # Direct lookup first for exact matches
-        standardized_metric = metric_mappings.get(original_metric.lower(), None)
+        # Clean up the metric name
+        cleaned_metric = original_metric.lower()
         
-        if not standardized_metric:
-            # Try pattern-based standardization for EPS variants
-            if 'eps' in original_metric.lower() or 'earnings per share' in original_metric.lower():
-                if 'non-gaap' in original_metric.lower():
-                    standardized_metric = 'EPS (Non-GAAP)'
-                elif 'gaap' in original_metric.lower() and 'non-gaap' not in original_metric.lower():
-                    standardized_metric = 'EPS (GAAP)'
-                elif 'diluted' in original_metric.lower():
-                    standardized_metric = 'EPS (Diluted)'
-                elif 'basic' in original_metric.lower():
-                    standardized_metric = 'EPS (Basic)'
-                elif 'adjusted' in original_metric.lower():
-                    standardized_metric = 'EPS (Adjusted)'
-                else:
-                    standardized_metric = 'EPS'
-            else:
-                # Keep original if no match found
-                standardized_metric = original_metric
+        # Remove common prefixes/suffixes that add noise
+        cleaned_metric = re.sub(r'\b(gaap|non-gaap|adjusted|diluted|basic)\s+', '', cleaned_metric)
+        cleaned_metric = re.sub(r'\s+(gaap|non-gaap|adjusted|diluted|basic)\b', '', cleaned_metric)
+        
+        # Remove parenthetical content that's not GAAP/Non-GAAP
+        cleaned_metric = re.sub(r'\([^)]*\)', '', cleaned_metric)
+        cleaned_metric = cleaned_metric.strip()
+        
+        # Apply standardization
+        standardized_metric = metric_mappings.get(cleaned_metric, original_metric)
+        
+        # Preserve GAAP/Non-GAAP distinctions from original
+        if 'non-gaap' in original_metric.lower():
+            if '(Non-GAAP)' not in standardized_metric:
+                standardized_metric += ' (Non-GAAP)'
+        elif 'gaap' in original_metric.lower() and 'non-gaap' not in original_metric.lower():
+            if '(GAAP)' not in standardized_metric:
+                standardized_metric += ' (GAAP)'
+        
+        # Preserve adjusted distinction
+        if 'adjusted' in original_metric.lower() and '(Adjusted)' not in standardized_metric:
+            standardized_metric += ' (Adjusted)'
         
         standardized_df.at[idx, 'metric'] = standardized_metric
     
