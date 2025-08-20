@@ -697,7 +697,7 @@ with main_tab1:
                         year = '20' + year
                     year_num = int(year)
                     
-                    transcript, error = get_transcript_for_quarter(ticker, quarter_num, year_num)
+                    transcript, error, metadata = get_transcript_for_quarter(ticker, quarter_num, year_num)
                     if transcript:
                         # Extract guidance from transcript
                         st.write("Extracting guidance from transcript...")
@@ -714,7 +714,7 @@ with main_tab1:
                             st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
             else:
                 # Try to get most recent transcript
-                transcript, error = get_transcript_for_quarter(ticker, None, None)
+                transcript, error, metadata = get_transcript_for_quarter(ticker, None, None)
                 if transcript:
                     st.write("Extracting guidance from most recent transcript...")
                     table = extract_transcript_guidance(transcript, ticker, client, model_id)
@@ -722,7 +722,8 @@ with main_tab1:
                     if df is not None and not df.empty:
                         # Use SEC filing date if available, otherwise "Most Recent"
                         df["filing_date"] = sec_filing_date if sec_filing_date else "Most Recent"
-                        df["filing_url"] = f"Most Recent Transcript for {ticker}"
+                        source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
+                        df["filing_url"] = f"Most Recent {source} Transcript"
                         df["model_used"] = selected_model
                         all_results.append(df)
                         st.success(f"Guidance extracted from transcript.")

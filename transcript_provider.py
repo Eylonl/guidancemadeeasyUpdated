@@ -168,10 +168,10 @@ def get_transcript_for_quarter(ticker, quarter_num, year_num):
             st.write(f"Transcript length: {len(transcript):,} characters")
             if metadata:
                 st.write(f"Metadata: {metadata}")
-            return transcript, None
+            return transcript, None, metadata
         else:
             st.warning(f"No transcript found for {ticker} {quarter_str} {year_num}: {error}")
-            return None, error
+            return None, error, None
     else:
         # Most recent transcript (no specific quarter/year)
         transcript, error, metadata = fetch_transcript_defeatbeta(ticker, None, None)
@@ -181,7 +181,7 @@ def get_transcript_for_quarter(ticker, quarter_num, year_num):
             st.write(f"Transcript length: {len(transcript):,} characters")
             if metadata:
                 st.write(f"Metadata: {metadata}")
-            return transcript, None
+            return transcript, None, metadata
         else:
             st.warning(f"No transcript found for {ticker}: {error}")
-            return None, error
+            return None, error, None
