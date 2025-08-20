@@ -659,7 +659,7 @@ with main_tab1:
                         break
 
         # Transcript Processing
-        if extract_transcripts and apininjas_key:
+        if extract_transcripts:
             st.subheader("Processing Earnings Transcripts")
             
             # Parse quarter input for transcript search
@@ -681,7 +681,7 @@ with main_tab1:
                         if df is not None and not df.empty:
                             # Use SEC filing date if available, otherwise use quarter format
                             df["filing_date"] = sec_filing_date if sec_filing_date else f"{year_num}-Q{quarter_num}"
-                            df["filing_url"] = "APINinjas Transcript"
+                            df["filing_url"] = "DefeatBeta Transcript"
                             df["model_used"] = selected_model
                             all_results.append(df)
                             st.success(f"Guidance extracted from transcript.")
