@@ -352,7 +352,7 @@ with main_tab2:
                             
                             # Show text preview
                             st.write("**Text Preview:**")
-                            st.text_area("", doc['text_content'], height=100, disabled=True, key=f"preview_{i}")
+                            st.text_area("Document Preview", doc['text_content'], height=100, disabled=True, key=f"preview_{i}", label_visibility="hidden")
                     
                     # Upload buttons
                     col1, col2 = st.columns(2)
