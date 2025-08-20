@@ -103,7 +103,7 @@ with main_tab1:
     with col1:
         extract_sec = st.checkbox("SEC 8-K Filings", value=True)
     with col2:
-        extract_transcripts = st.checkbox("Earnings Transcripts", value=apininjas_key is not None)
+        extract_transcripts = st.checkbox("Earnings Transcripts", value=True)
     with col3:
         extract_uploaded = st.checkbox("Uploaded Documents", value=True)
 
