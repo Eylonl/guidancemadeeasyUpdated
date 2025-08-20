@@ -60,7 +60,7 @@ def is_cik_format(s):
 
 st.set_page_config(page_title="Enhanced SEC 8-K & Transcript Guidance Extractor", layout="centered")
 st.title("Enhanced SEC 8-K & Transcript Guidance Extractor")
-st.markdown("**Extract guidance from SEC filings and Earnings Call Transcripts with AI.**")
+st.markdown("**Extract Guidance from SEC filings and Earnings Call Transcripts with AI.**")
 
 # API Key Management with Password Protection
 st.sidebar.header("🔐 API Configuration")
