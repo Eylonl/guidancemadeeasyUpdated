@@ -656,7 +656,6 @@ with main_tab1:
                             if df is not None and not df.empty and len(df) > 0:
                                 df["filing_date"] = date_str
                                 df["filing_url"] = url
-                                df["model_used"] = selected_model
                                 all_results.append(df)
                                 st.success(f"Guidance extracted from this 8-K.")
                                 st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
@@ -708,7 +707,6 @@ with main_tab1:
                             df["filing_date"] = sec_filing_date if sec_filing_date else f"{year_num}-Q{quarter_num}"
                             source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
                             df["filing_url"] = f"{source} Transcript"
-                            df["model_used"] = selected_model
                             all_results.append(df)
                             st.success(f"Guidance extracted from transcript.")
                             st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
@@ -761,7 +759,6 @@ with main_tab1:
                                     df["filing_date"] = f"{display_year}-Q{quarter}"
                                     source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
                                     df["filing_url"] = f"{source} Transcript Q{quarter} {display_year}"
-                                    df["model_used"] = selected_model
                                     all_results.append(df)
                                     st.success(f"Guidance extracted from Q{quarter} {display_year} transcript.")
                                     st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
@@ -779,7 +776,6 @@ with main_tab1:
                         df["filing_date"] = sec_filing_date if sec_filing_date else "Most Recent"
                         source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
                         df["filing_url"] = f"Most Recent {source} Transcript"
-                        df["model_used"] = selected_model
                         all_results.append(df)
                         st.success(f"Guidance extracted from transcript.")
                         st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
@@ -856,7 +852,6 @@ with main_tab1:
                                     if df is not None and not df.empty:
                                         df["filing_date"] = f"{doc['year']}-{doc['quarter']}"
                                         df["filing_url"] = f"Uploaded: {doc.get('storage_path', 'Unknown')}"
-                                        df["model_used"] = selected_model
                                         all_results.append(df)
                                         st.success(f"Guidance extracted from uploaded {doc['file_type']}")
                                         st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
@@ -889,13 +884,12 @@ with main_tab1:
                 'high': 'High',
                 'average': 'Average',
                 'filing_date': 'Filing Date',
-                'filing_url': 'Source',
-                'model_used': 'AI Model'
+                'filing_url': 'Source'
             }
             
             # Preview table
             st.subheader("Preview of Extracted Guidance")
-            display_cols = ['metric', 'value_or_range', 'period', 'period_type', 'low', 'high', 'average', 'filing_date', 'source_type']
+            display_cols = ['metric', 'value_or_range', 'period', 'period_type', 'low', 'average', 'high', 'filing_date', 'source_type']
             display_df = combined[display_cols] if all(col in combined.columns for col in display_cols) else combined
             display_df = display_df.rename(columns={c: display_rename.get(c, c) for c in display_df.columns})
             st.dataframe(display_df, use_container_width=True)
@@ -945,13 +939,12 @@ if False:  # Disabled duplicate section
         'high': 'High',
         'average': 'Average',
         'filing_date': 'Filing Date',
-        'filing_url': 'Source',
-        'model_used': 'AI Model'
+        'filing_url': 'Source'
     }
     
     # Preview table
     st.subheader("Preview of Extracted Guidance")
-    display_cols = ['metric', 'value_or_range', 'period', 'period_type', 'low', 'high', 'average', 'filing_date', 'source_type']
+    display_cols = ['metric', 'value_or_range', 'period', 'period_type', 'low', 'average', 'high', 'filing_date', 'source_type']
     display_df = combined[display_cols] if all(col in combined.columns for col in display_cols) else combined
     display_df = display_df.rename(columns={c: display_rename.get(c, c) for c in display_df.columns})
     st.dataframe(display_df, use_container_width=True)
