@@ -577,8 +577,11 @@ def format_guidance_values(df):
                 else:
                     try:
                         val = float(cell_value)
-                        # Just display the number without formatting
-                        formatted_df.at[idx, col] = str(val)
+                        # Check if original value_or_range has % to determine if we should add %
+                        if '%' in value_text:
+                            formatted_df.at[idx, col] = f"{val}%"
+                        else:
+                            formatted_df.at[idx, col] = str(val)
                     except:
                         # If can't convert to float, extract scaled value from original text
                         clean_value = value_text
