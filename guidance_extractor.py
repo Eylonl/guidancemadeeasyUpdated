@@ -552,25 +552,40 @@ def format_guidance_values(df):
         for col in ['low', 'high', 'average']:
             if col in df.columns:
                 cell_value = row.get(col)
-                # Handle N/A, null, empty, or non-numeric values by using original value
+                # Handle N/A, null, empty, or non-numeric values by using clean numeric value
                 if pd.isnull(cell_value) or str(cell_value).strip().upper() in ['N/A', 'NA', 'NULL', 'TBD', '', '-', 'NONE']:
-                    # Always show the value_or_range text instead of NULL/None
-                    formatted_df.at[idx, col] = value_text
+                    # Extract numeric value from value_or_range text, removing words like 'billion', 'million'
+                    clean_value = value_text
+                    # Remove common text and keep only numbers, decimals, percentages, and dollar signs
+                    import re
+                    if '%' in clean_value:
+                        # For percentages, extract just the number and %
+                        match = re.search(r'([\d.]+)%', clean_value)
+                        if match:
+                            clean_value = match.group(1) + '%'
+                    elif '$' in clean_value or 'billion' in clean_value.lower() or 'million' in clean_value.lower():
+                        # For dollar amounts, extract numeric value and convert to actual number
+                        # Remove text like 'billion', 'million' and extract the numeric part
+                        clean_value = re.sub(r'\b(billion|million|thousand)\b', '', clean_value, flags=re.IGNORECASE)
+                        clean_value = re.sub(r'[^\d.\$]', '', clean_value)
+                    formatted_df.at[idx, col] = clean_value
                 else:
                     try:
                         val = float(cell_value)
-                        if is_percentage:
-                            formatted_df.at[idx, col] = f"{val:.1f}%"
-                        elif is_dollar:
-                            if abs(val) >= 100:
-                                formatted_df.at[idx, col] = f"${val:.0f}"
-                            elif abs(val) >= 10:
-                                formatted_df.at[idx, col] = f"${val:.1f}"
-                            else:
-                                formatted_df.at[idx, col] = f"${val:.2f}"
+                        # Just display the number without formatting
+                        formatted_df.at[idx, col] = str(val)
                     except:
-                        # If can't convert to float, use original value
-                        formatted_df.at[idx, col] = value_text
+                        # If can't convert to float, clean the original value
+                        clean_value = value_text
+                        import re
+                        if '%' in clean_value:
+                            match = re.search(r'([\d.]+)%', clean_value)
+                            if match:
+                                clean_value = match.group(1) + '%'
+                        elif '$' in clean_value or 'billion' in clean_value.lower() or 'million' in clean_value.lower():
+                            clean_value = re.sub(r'\b(billion|million|thousand)\b', '', clean_value, flags=re.IGNORECASE)
+                            clean_value = re.sub(r'[^\d.\$]', '', clean_value)
+                        formatted_df.at[idx, col] = clean_value
     
     # Check if DataFrame is empty or contains no valid guidance
     if df.empty:
