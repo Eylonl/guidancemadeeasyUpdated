@@ -553,7 +553,7 @@ def format_guidance_values(df):
             if col in df.columns:
                 cell_value = row.get(col)
                 # Handle N/A, null, empty, or non-numeric values by using original value
-                if pd.isnull(cell_value) or str(cell_value).strip().upper() in ['N/A', 'NA', 'NULL', 'TBD', '', '-']:
+                if pd.isnull(cell_value) or str(cell_value).strip().upper() in ['N/A', 'NA', 'NULL', 'TBD', '', '-', 'NONE']:
                     # Always show the value_or_range text instead of NULL/None
                     formatted_df.at[idx, col] = value_text
                 else:
