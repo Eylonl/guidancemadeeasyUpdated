@@ -581,10 +581,13 @@ with main_tab2:
                     
                     st.divider()
             else:
-                st.info("No uploaded documents found with current filters")
                 
-        except Exception as e:
-            st.error(f"Error retrieving documents: {str(e)}")
+                st.divider()
+        else:
+            st.info("No uploaded documents found with current filters")
+            
+    except Exception as e:
+        st.error(f"Error retrieving documents: {str(e)}")
 
 # Move the processing logic back to the main guidance extraction tab
 with main_tab1:
