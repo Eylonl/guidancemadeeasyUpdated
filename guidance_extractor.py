@@ -56,7 +56,7 @@ CRITICAL GUIDANCE FOR THE NUMERIC COLUMNS (low, high, average):
 - For dollar amounts, omit the $ sign: "$0.05 to $0.10" → low=0.05, high=0.10
 
 - For qualitative/relative guidance (e.g., "above last year", "slight expansion"): 
-  - Leave low, high, and average columns as NULL or empty
+  - Fill low, high, and average columns with the same qualitative text from value_or_range
   - Capture the full qualitative statement in the value_or_range column exactly as stated
 
 FOR THE PERIOD TYPE COLUMN:
@@ -209,7 +209,33 @@ ONLY EXTRACT: Formal guidance presented as official company targets or ranges in
 
 If NO formal financial guidance (without forward-looking statements) is provided, return an empty table with just the headers.
 
-Apply the same formatting rules as SEC filings for numeric columns and value_or_range.
+CRITICAL GUIDANCE FOR THE NUMERIC COLUMNS (low, high, average):
+
+- For concrete numeric guidance: provide ONLY numeric values (no $ signs, no % symbols, no "million" or "billion" text)
+- Use negative numbers for negative values: -1 instead of "(1)" and -5 instead of "(5%)"
+- For mixed sign ranges like "$(1) million to $1 million", make sure low is negative (-1) and high is positive (1)
+- Convert all billions to millions (multiply by 1000): $1.2 billion → 1200
+- For percentages, just give the number without % sign: "5% to 7%" → low=5, high=7
+- For dollar amounts, omit the $ sign: "$0.05 to $0.10" → low=0.05, high=0.10
+
+- For qualitative/relative guidance (e.g., "above last year", "slight expansion"): 
+  - Fill low, high, and average columns with the same qualitative text from value_or_range
+  - Capture the full qualitative statement in the value_or_range column exactly as stated
+
+FOR THE PERIOD TYPE COLUMN:
+
+- Classify each period as either "Quarter" or "Full Year" based on the applicable period
+- Use "Quarter" for: Q1, Q2, Q3, Q4, First Quarter, Next Quarter, Current Quarter, etc.
+- Use "Full Year" for: Full Year, Fiscal Year, FY, Annual, Year Ending, etc.
+- If a period just mentions a year (e.g., "2023" or "FY24") without specifying a quarter, classify it as "Full Year"
+- THIS COLUMN IS REQUIRED AND MUST ONLY CONTAIN "Quarter" OR "Full Year" - NO OTHER VALUES
+
+FORMATTING INSTRUCTIONS FOR VALUE_OR_RANGE COLUMN:
+
+- Always preserve the original notation exactly as it appears in the document (maintain parentheses, $ signs, % symbols)
+- Example: If document says "($0.05) to $0.10", use exactly "($0.05) to $0.10" in value_or_range column
+- Example: If document says "(5%) to 2%", use exactly "(5%) to 2%" in value_or_range column
+- For billion values, keep them as billions in this column: "$1.10 billion to $1.11 billion"
 
 Respond in table format without commentary.\n\n{filtered_text}"""
 
