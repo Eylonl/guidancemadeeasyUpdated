@@ -580,9 +580,6 @@ with main_tab2:
                                     st.error(f"Failed to delete document: {str(e)}")
                     
                     st.divider()
-            else:
-                
-                st.divider()
         else:
             st.info("No uploaded documents found with current filters")
             
