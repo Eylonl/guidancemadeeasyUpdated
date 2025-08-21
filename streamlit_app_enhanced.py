@@ -721,22 +721,35 @@ with main_tab1:
                     cutoff = datetime.now() - timedelta(days=(365 * years_back) + 91.25)
                     st.write(f"Looking for transcripts from the past {years_back} years plus 1 quarter (from {cutoff.strftime('%Y-%m-%d')} to present)")
                     
+                    # Get fiscal year end information for proper quarter mapping
+                    from edgar_enhanced import get_fiscal_year_end, get_fiscal_dates
+                    fiscal_year_end_month, fiscal_year_end_day = get_fiscal_year_end(ticker, cik)
+                    
                     # Get transcripts for the specified time period
                     for year_offset in range(years_back + 1):
                         target_year = current_year - year_offset
                         for quarter in [1, 2, 3, 4]:
-                            transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, target_year)
+                            # Get fiscal quarter information to determine proper fiscal year
+                            fiscal_info = get_fiscal_dates(ticker, quarter, target_year, fiscal_year_end_month, fiscal_year_end_day)
+                            if fiscal_info:
+                                # Use the fiscal year from fiscal_info instead of calendar year
+                                fiscal_year = int(fiscal_info['quarter_period'].split('FY')[1])
+                                transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, fiscal_year)
+                            else:
+                                transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, target_year)
                             if transcript:
-                                st.write(f"Extracting guidance from {ticker} Q{quarter} {target_year} transcript...")
+                                # Use fiscal year for display if available
+                                display_year = fiscal_year if fiscal_info else target_year
+                                st.write(f"Extracting guidance from {ticker} Q{quarter} {display_year} transcript...")
                                 table = extract_transcript_guidance(transcript, ticker, client, model_id)
                                 df = process_guidance_table(table, "Transcript")
                                 if df is not None and not df.empty:
-                                    df["filing_date"] = f"{target_year}-Q{quarter}"
+                                    df["filing_date"] = f"{display_year}-Q{quarter}"
                                     source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
-                                    df["filing_url"] = f"{source} Transcript Q{quarter} {target_year}"
+                                    df["filing_url"] = f"{source} Transcript Q{quarter} {display_year}"
                                     df["model_used"] = selected_model
                                     all_results.append(df)
-                                    st.success(f"Guidance extracted from Q{quarter} {target_year} transcript.")
+                                    st.success(f"Guidance extracted from Q{quarter} {display_year} transcript.")
                                     st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
                 except ValueError:
                     st.error("Invalid year input. Must be a number.")
