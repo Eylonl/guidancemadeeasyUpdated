@@ -48,12 +48,16 @@ If NO formal financial guidance is provided, return an empty table with just the
 
 CRITICAL GUIDANCE FOR THE NUMERIC COLUMNS (low, high, average):
 
-- For concrete numeric guidance: provide ONLY numeric values (no $ signs, no % symbols, no "million" or "billion" text)
-- Use negative numbers for negative values: -1 instead of "(1)" and -5 instead of "(5%)"
+MANDATORY: If the value_or_range column contains a % symbol, you MUST include the % symbol in low, high, and average columns.
+
+- For percentage guidance: ALWAYS include % symbol in all numeric columns
+  Example: "25.0%" → low=25.0%, high=25.0%, average=25.0%
+  Example: "5% to 7%" → low=5%, high=7%, average=6%
+- For dollar amounts: provide numeric values without $ signs, convert billions to millions
+  Example: "$7.7 billion" → low=7700, high=7700, average=7700
+  Example: "$0.05 to $0.10" → low=0.05, high=0.10, average=0.075
+- Use negative numbers for negative values: -1 instead of "(1)" and -5% instead of "(5%)"
 - For mixed sign ranges like "$(1) million to $1 million", make sure low is negative (-1) and high is positive (1)
-- Convert all billions to millions (multiply by 1000): $1.2 billion → 1200
-- For percentages, give the number with % sign: "5% to 7%" → low=5%, high=7%
-- For dollar amounts, omit the $ sign: "$0.05 to $0.10" → low=0.05, high=0.10
 
 - For qualitative/relative guidance (e.g., "above last year", "slight expansion"): 
   - Fill low, high, and average columns with the same qualitative text from value_or_range
@@ -211,12 +215,16 @@ If NO formal financial guidance (without forward-looking statements) is provided
 
 CRITICAL GUIDANCE FOR THE NUMERIC COLUMNS (low, high, average):
 
-- For concrete numeric guidance: provide ONLY numeric values (no $ signs, no % symbols, no "million" or "billion" text)
-- Use negative numbers for negative values: -1 instead of "(1)" and -5 instead of "(5%)"
+MANDATORY: If the value_or_range column contains a % symbol, you MUST include the % symbol in low, high, and average columns.
+
+- For percentage guidance: ALWAYS include % symbol in all numeric columns
+  Example: "25.0%" → low=25.0%, high=25.0%, average=25.0%
+  Example: "5% to 7%" → low=5%, high=7%, average=6%
+- For dollar amounts: provide numeric values without $ signs, convert billions to millions
+  Example: "$7.7 billion" → low=7700, high=7700, average=7700
+  Example: "$0.05 to $0.10" → low=0.05, high=0.10, average=0.075
+- Use negative numbers for negative values: -1 instead of "(1)" and -5% instead of "(5%)"
 - For mixed sign ranges like "$(1) million to $1 million", make sure low is negative (-1) and high is positive (1)
-- Convert all billions to millions (multiply by 1000): $1.2 billion → 1200
-- For percentages, give the number with % sign: "5% to 7%" → low=5%, high=7%
-- For dollar amounts, omit the $ sign: "$0.05 to $0.10" → low=0.05, high=0.10
 
 - For qualitative/relative guidance (e.g., "above last year", "slight expansion"): 
   - Fill low, high, and average columns with the same qualitative text from value_or_range
