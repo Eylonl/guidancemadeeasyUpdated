@@ -890,13 +890,15 @@ with main_tab1:
             excel_buffer = BytesIO()
             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
                 combined.to_excel(writer, sheet_name='Guidance_Data', index=False)
-                
-                st.download_button(
-                    "📥 Download Excel",
-                    data=excel_buffer.getvalue(),
-                    file_name=f"{ticker}_guidance_output.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+            
+            excel_buffer.seek(0)  # Reset buffer position
+            
+            st.download_button(
+                "📥 Download Excel",
+                data=excel_buffer.getvalue(),
+                file_name=f"{ticker}_guidance_output.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         else:
             st.warning("No guidance data extracted from any source.")
             st.info("Try adjusting your search criteria or check if the company provides guidance in their earnings materials.")
@@ -944,6 +946,8 @@ if False:  # Disabled duplicate section
     excel_buffer = BytesIO()
     with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
         combined.to_excel(writer, sheet_name='Guidance_Data', index=False)
+    
+    excel_buffer.seek(0)  # Reset buffer position
     
     st.download_button(
         "📥 Download Excel",
