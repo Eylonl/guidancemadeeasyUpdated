@@ -725,21 +725,35 @@ with main_tab1:
                     from edgar_enhanced import get_fiscal_year_end, get_fiscal_dates
                     fiscal_year_end_month, fiscal_year_end_day = get_fiscal_year_end(ticker, cik)
                     
-                    # Get transcripts for the specified time period
+                    # Get transcripts for the specified time period using fiscal year logic
+                    current_date = datetime.now()
+                    
+                    # Calculate the most recent fiscal year based on current date and fiscal year end
+                    if fiscal_year_end_month <= 3:  # Jan-Mar fiscal year end
+                        if current_date.month <= fiscal_year_end_month:
+                            current_fiscal_year = current_date.year
+                        else:
+                            current_fiscal_year = current_date.year + 1
+                    else:  # Apr-Dec fiscal year end
+                        if current_date.month > fiscal_year_end_month:
+                            current_fiscal_year = current_date.year + 1
+                        else:
+                            current_fiscal_year = current_date.year
+                    
+                    # Get transcripts for fiscal years going back from current fiscal year
                     for year_offset in range(years_back + 1):
-                        target_year = current_year - year_offset
+                        target_fiscal_year = current_fiscal_year - year_offset
                         for quarter in [1, 2, 3, 4]:
-                            # Get fiscal quarter information to determine proper fiscal year
-                            fiscal_info = get_fiscal_dates(ticker, quarter, target_year, fiscal_year_end_month, fiscal_year_end_day)
+                            # Get fiscal quarter information to determine proper calendar dates
+                            fiscal_info = get_fiscal_dates(ticker, quarter, target_fiscal_year, fiscal_year_end_month, fiscal_year_end_day)
                             if fiscal_info:
-                                # Use the fiscal year from fiscal_info instead of calendar year
-                                fiscal_year = int(fiscal_info['quarter_period'].split('FY')[1])
-                                transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, fiscal_year)
+                                # Use the fiscal year for transcript fetching
+                                transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, target_fiscal_year)
                             else:
-                                transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, target_year)
+                                transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, target_fiscal_year)
                             if transcript:
-                                # Use fiscal year for display if available
-                                display_year = fiscal_year if fiscal_info else target_year
+                                # Use fiscal year for display
+                                display_year = target_fiscal_year
                                 st.write(f"Extracting guidance from {ticker} Q{quarter} {display_year} transcript...")
                                 table = extract_transcript_guidance(transcript, ticker, client, model_id)
                                 df = process_guidance_table(table, "Transcript")
