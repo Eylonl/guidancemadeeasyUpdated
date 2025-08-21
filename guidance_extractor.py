@@ -542,15 +542,17 @@ def standardize_metric_names(df):
     return standardized_df
 
 def format_guidance_values(df):
-    """Replace NULL values with empty strings so ChatGPT can fill them in properly"""
+    """Replace NULL values with value_or_range text - never show NULL"""
     formatted_df = df.copy()
     for idx, row in df.iterrows():
+        value_text = str(row.get('value_or_range', ''))
+        
         for col in ['low', 'high', 'average']:
             if col in df.columns:
                 cell_value = row.get(col)
-                # Replace NULL/None values with empty string so ChatGPT fills them
+                # Replace NULL/None values with value_or_range text
                 if pd.isnull(cell_value) or str(cell_value).strip().upper() in ['N/A', 'NA', 'NULL', 'TBD', '', '-', 'NONE']:
-                    formatted_df.at[idx, col] = ""
+                    formatted_df.at[idx, col] = value_text
     
     return formatted_df
 
