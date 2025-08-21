@@ -14,7 +14,7 @@ def extract_guidance(text, ticker, client, model_name):
 
 Return a structured table containing the following columns:
 
-- metric (preserve EXACT metric names from the text, including specific business segments like "Productivity and Business Processes revenue", "More Personal Computing revenue", "Intelligent Cloud revenue", "Azure revenue", "Office 365 Commercial revenue", "Windows revenue", "Xbox revenue", etc. CRITICAL: ONLY append "constant currency" to the metric name if that specific guidance statement explicitly mentions "constant currency", "in constant currency", or similar currency qualifiers. Do NOT add "constant currency" to metrics that don't explicitly mention it in their guidance statement. Example: "Non-GAAP EPS is expected to be $1.44 to $1.48 in constant currency" should become "Non-GAAP EPS constant currency", while "Non-GAAP EPS is expected to be $1.46 to $1.50" should remain exactly "Non-GAAP EPS")
+- metric (STANDARDIZE metric names to clean, consistent formats while preserving business segments and GAAP/Non-GAAP distinctions. Examples: "FY '26 subscription revenue" becomes "Subscription Revenue", "Q1 FY '26 non-GAAP EPS" becomes "EPS (Non-GAAP)", "Productivity and Business Processes revenue" stays "Productivity and Business Processes Revenue", "Azure revenue" stays "Azure Revenue". Remove time period prefixes (FY '26, Q1, etc.) but keep segment names and accounting standards. Add (GAAP) or (Non-GAAP) suffixes where applicable. Use proper capitalization.)
 - value_or_range (e.g. $1.5B–$1.6B or $2.05 or $(0.05) to $0.10 - EXACTLY as it appears in the text)
 - period (e.g. Q3 FY24, Full Year 2025)
 - period_type (MUST be either "Quarter" or "Full Year" based on the period text)
@@ -182,7 +182,7 @@ CRITICAL COMPLIANCE REQUIREMENT: Do NOT extract any forward-looking statements o
 
 Return a structured table containing the following columns:
 
-- metric (preserve EXACT metric names from the text, including specific business segments like "Productivity and Business Processes revenue", "More Personal Computing revenue", "Intelligent Cloud revenue", "Azure revenue", "Office 365 Commercial revenue", "Windows revenue", "Xbox revenue", etc. CRITICAL: ONLY append "constant currency" to the metric name if that specific guidance statement explicitly mentions "constant currency", "in constant currency", or similar currency qualifiers. Do NOT add "constant currency" to metrics that don't explicitly mention it in their guidance statement. Example: "Non-GAAP EPS is expected to be $1.44 to $1.48 in constant currency" should become "Non-GAAP EPS constant currency", while "Non-GAAP EPS is expected to be $1.46 to $1.50" should remain exactly "Non-GAAP EPS")
+- metric (STANDARDIZE metric names to clean, consistent formats while preserving business segments and GAAP/Non-GAAP distinctions. Examples: "FY '26 subscription revenue" becomes "Subscription Revenue", "Q1 FY '26 non-GAAP EPS" becomes "EPS (Non-GAAP)", "Productivity and Business Processes revenue" stays "Productivity and Business Processes Revenue", "Azure revenue" stays "Azure Revenue". Remove time period prefixes (FY '26, Q1, etc.) but keep segment names and accounting standards. Add (GAAP) or (Non-GAAP) suffixes where applicable. Use proper capitalization.)
 - value_or_range (e.g. $1.5B–$1.6B or $2.05 or $(0.05) to $0.10 - EXACTLY as it appears in the text)
 - period (e.g. Q3 FY24, Full Year 2025)
 - period_type (MUST be either "Quarter" or "Full Year" based on the period text)
@@ -279,305 +279,104 @@ def split_gaap_non_gaap(df):
             rows.append(row)
     return pd.DataFrame(rows)
 
-def standardize_metric_names(df):
-    """Standardize and clean up metric names for consistency"""
-    if 'metric' not in df.columns:
+def standardize_metric_names(df, client=None, model_name="gpt-4o-mini"):
+    """Use ChatGPT to apply regex-based metric standardization"""
+    if 'metric' not in df.columns or df.empty:
         return df
     
-    # Define comprehensive standardized metric mappings
-    metric_mappings = {
-        # Revenue variations
-        'revenue': 'Revenue',
-        'revenues': 'Revenue',
-        'total revenue': 'Revenue',
-        'total revenues': 'Revenue',
-        'net revenue': 'Revenue',
-        'net revenues': 'Revenue',
-        'net sales': 'Revenue',
-        'total net sales': 'Revenue',
-        'sales': 'Revenue',
-        'total sales': 'Revenue',
-        'gross sales': 'Revenue',
-        'top line': 'Revenue',
-        'turnover': 'Revenue',
-        'income': 'Revenue',
-        'total income': 'Revenue',
-        'product revenue': 'Product Revenue',
-        'product revenues': 'Product Revenue',
-        'service revenue': 'Service Revenue',
-        'service revenues': 'Service Revenue',
-        'subscription revenue': 'Subscription Revenue',
-        'subscription revenues': 'Subscription Revenue',
-        'recurring revenue': 'Recurring Revenue',
-        'license revenue': 'License Revenue',
-        'software revenue': 'Software Revenue',
-        'hardware revenue': 'Hardware Revenue',
-        'consulting revenue': 'Consulting Revenue',
-        'professional services revenue': 'Professional Services Revenue',
-        'maintenance revenue': 'Maintenance Revenue',
-        'support revenue': 'Support Revenue',
-        'cloud revenue': 'Cloud Revenue',
-        'saas revenue': 'SaaS Revenue',
-        'platform revenue': 'Platform Revenue',
-        'digital revenue': 'Digital Revenue',
-        'online revenue': 'Online Revenue',
-        'e-commerce revenue': 'E-commerce Revenue',
-        'retail revenue': 'Retail Revenue',
-        'wholesale revenue': 'Wholesale Revenue',
-        'international revenue': 'International Revenue',
-        'domestic revenue': 'Domestic Revenue',
-        'organic revenue': 'Organic Revenue',
-        'constant currency revenue': 'Constant Currency Revenue',
-        
-        # EPS variations
-        'eps': 'EPS',
-        'earnings per share': 'EPS',
-        'diluted eps': 'EPS (Diluted)',
-        'diluted earnings per share': 'EPS (Diluted)',
-        'basic eps': 'EPS (Basic)',
-        'basic earnings per share': 'EPS (Basic)',
-        'adjusted eps': 'EPS (Adjusted)',
-        'adjusted earnings per share': 'EPS (Adjusted)',
-        'normalized eps': 'EPS (Normalized)',
-        'core eps': 'EPS (Core)',
-        'continuing operations eps': 'EPS (Continuing Operations)',
-        'reported eps': 'EPS (Reported)',
-        'pro forma eps': 'EPS (Pro Forma)',
-        'non-gaap eps': 'EPS (Non-GAAP)',
-        'non-gaap eps usd (non-gaap)': 'EPS (Non-GAAP)',
-        'non-gaap eps q1 range usd (non-gaap)': 'EPS (Non-GAAP)',
-        'eps (non-gaap)': 'EPS (Non-GAAP)',
-        'gaap eps': 'EPS (GAAP)',
-        
-        # Operating metrics
-        'operating income': 'Operating Income',
-        'income from operations': 'Operating Income',
-        'operating profit': 'Operating Income',
-        'operating earnings': 'Operating Income',
-        'operating results': 'Operating Income',
-        'segment operating income': 'Segment Operating Income',
-        'adjusted operating income': 'Operating Income (Adjusted)',
-        'core operating income': 'Operating Income (Core)',
-        'normalized operating income': 'Operating Income (Normalized)',
-        'operating margin': 'Operating Margin',
-        'operating profit margin': 'Operating Margin',
-        'operating income margin': 'Operating Margin',
-        'segment operating margin': 'Segment Operating Margin',
-        'adjusted operating margin': 'Operating Margin (Adjusted)',
-        'core operating margin': 'Operating Margin (Core)',
-        
-        # Net income variations
-        'net income': 'Net Income',
-        'net earnings': 'Net Income',
-        'profit': 'Net Income',
-        'net profit': 'Net Income',
-        'bottom line': 'Net Income',
-        'earnings': 'Net Income',
-        'adjusted net income': 'Net Income (Adjusted)',
-        'normalized net income': 'Net Income (Normalized)',
-        'core net income': 'Net Income (Core)',
-        'continuing operations net income': 'Net Income (Continuing Operations)',
-        'attributable net income': 'Net Income (Attributable)',
-        'net income attributable to shareholders': 'Net Income (Attributable to Shareholders)',
-        
-        # EBITDA variations
-        'ebitda': 'EBITDA',
-        'adjusted ebitda': 'EBITDA (Adjusted)',
-        'normalized ebitda': 'EBITDA (Normalized)',
-        'core ebitda': 'EBITDA (Core)',
-        'segment ebitda': 'Segment EBITDA',
-        'ebitda margin': 'EBITDA Margin',
-        'adjusted ebitda margin': 'EBITDA Margin (Adjusted)',
-        'ebit': 'EBIT',
-        'adjusted ebit': 'EBIT (Adjusted)',
-        'ebit margin': 'EBIT Margin',
-        
-        # Cash flow variations
-        'cash flow': 'Cash Flow',
-        'operating cash flow': 'Operating Cash Flow',
-        'cash flow from operations': 'Operating Cash Flow',
-        'cash from operations': 'Operating Cash Flow',
-        'free cash flow': 'Free Cash Flow',
-        'fcf': 'Free Cash Flow',
-        'adjusted free cash flow': 'Free Cash Flow (Adjusted)',
-        'normalized free cash flow': 'Free Cash Flow (Normalized)',
-        'unlevered free cash flow': 'Unlevered Free Cash Flow',
-        'levered free cash flow': 'Levered Free Cash Flow',
-        'cash flow per share': 'Cash Flow Per Share',
-        'free cash flow per share': 'Free Cash Flow Per Share',
-        'investing cash flow': 'Investing Cash Flow',
-        'financing cash flow': 'Financing Cash Flow',
-        'cash flow yield': 'Cash Flow Yield',
-        
-        # Margin variations
-        'gross margin': 'Gross Margin',
-        'gross profit margin': 'Gross Margin',
-        'gross profit': 'Gross Profit',
-        'net margin': 'Net Margin',
-        'profit margin': 'Net Margin',
-        'net profit margin': 'Net Margin',
-        'pretax margin': 'Pretax Margin',
-        'pre-tax margin': 'Pretax Margin',
-        'contribution margin': 'Contribution Margin',
-        'segment margin': 'Segment Margin',
-        'service margin': 'Service Margin',
-        'product margin': 'Product Margin',
-        'software margin': 'Software Margin',
-        'hardware margin': 'Hardware Margin',
-        
-        # Capital and investment metrics
-        'capex': 'CapEx',
-        'capital expenditures': 'CapEx',
-        'capital spending': 'CapEx',
-        'capital investments': 'CapEx',
-        'pp&e investments': 'CapEx',
-        'maintenance capex': 'Maintenance CapEx',
-        'growth capex': 'Growth CapEx',
-        'r&d': 'R&D',
-        'research and development': 'R&D',
-        'r&d expenses': 'R&D',
-        'research and development expenses': 'R&D',
-        'sales and marketing': 'Sales & Marketing',
-        'sg&a': 'SG&A',
-        'selling general and administrative': 'SG&A',
-        
-        # Balance sheet metrics
-        'total assets': 'Total Assets',
-        'total liabilities': 'Total Liabilities',
-        'shareholders equity': 'Shareholders Equity',
-        'stockholders equity': 'Shareholders Equity',
-        'book value': 'Book Value',
-        'book value per share': 'Book Value Per Share',
-        'tangible book value': 'Tangible Book Value',
-        'working capital': 'Working Capital',
-        'net working capital': 'Working Capital',
-        'current assets': 'Current Assets',
-        'current liabilities': 'Current Liabilities',
-        'long term debt': 'Long-term Debt',
-        'total debt': 'Total Debt',
-        'net debt': 'Net Debt',
-        'cash and equivalents': 'Cash & Equivalents',
-        'cash and cash equivalents': 'Cash & Equivalents',
-        'total cash': 'Cash & Equivalents',
-        
-        # Ratios and returns
-        'roe': 'ROE',
-        'return on equity': 'ROE',
-        'roa': 'ROA',
-        'return on assets': 'ROA',
-        'roic': 'ROIC',
-        'return on invested capital': 'ROIC',
-        'roce': 'ROCE',
-        'return on capital employed': 'ROCE',
-        'debt to equity': 'Debt-to-Equity',
-        'debt equity ratio': 'Debt-to-Equity',
-        'current ratio': 'Current Ratio',
-        'quick ratio': 'Quick Ratio',
-        'asset turnover': 'Asset Turnover',
-        'inventory turnover': 'Inventory Turnover',
-        'receivables turnover': 'Receivables Turnover',
-        
-        # Growth metrics
-        'revenue growth': 'Revenue Growth',
-        'sales growth': 'Revenue Growth',
-        'organic growth': 'Organic Growth',
-        'constant currency growth': 'Constant Currency Growth',
-        'same store sales': 'Same Store Sales',
-        'comparable sales': 'Comparable Sales',
-        'comp sales': 'Comparable Sales',
-        'like for like sales': 'Like-for-Like Sales',
-        'user growth': 'User Growth',
-        'customer growth': 'Customer Growth',
-        'subscriber growth': 'Subscriber Growth',
-        
-        # Per share metrics
-        'book value per share': 'Book Value Per Share',
-        'tangible book value per share': 'Tangible Book Value Per Share',
-        'sales per share': 'Sales Per Share',
-        'revenue per share': 'Revenue Per Share',
-        'dividends per share': 'Dividends Per Share',
-        'dividend per share': 'Dividends Per Share',
-        
-        # Tax metrics
-        'tax rate': 'Tax Rate',
-        'effective tax rate': 'Effective Tax Rate',
-        'tax expense': 'Tax Expense',
-        'income tax expense': 'Tax Expense',
-        'provision for income taxes': 'Tax Expense',
-        
-        # Other financial metrics
-        'backlog': 'Backlog',
-        'deferred revenue': 'Deferred Revenue',
-        'unearned revenue': 'Deferred Revenue',
-        'contract liabilities': 'Deferred Revenue',
-        'remaining performance obligations': 'Remaining Performance Obligations',
-        'rpo': 'Remaining Performance Obligations',
-        'annual recurring revenue': 'Annual Recurring Revenue',
-        'arr': 'Annual Recurring Revenue',
-        'monthly recurring revenue': 'Monthly Recurring Revenue',
-        'mrr': 'Monthly Recurring Revenue',
-        'total contract value': 'Total Contract Value',
-        'tcv': 'Total Contract Value',
-        'annual contract value': 'Annual Contract Value',
-        'acv': 'Annual Contract Value',
-        'customer lifetime value': 'Customer Lifetime Value',
-        'clv': 'Customer Lifetime Value',
-        'ltv': 'Customer Lifetime Value',
-        'customer acquisition cost': 'Customer Acquisition Cost',
-        'cac': 'Customer Acquisition Cost',
-        'churn rate': 'Churn Rate',
-        'retention rate': 'Retention Rate',
-        'net retention rate': 'Net Retention Rate',
-        'gross retention rate': 'Gross Retention Rate',
-        'dollar based net retention': 'Dollar-Based Net Retention',
-        'net dollar retention': 'Dollar-Based Net Retention',
-        'ndr': 'Dollar-Based Net Retention',
-        'average selling price': 'Average Selling Price',
-        'asp': 'Average Selling Price',
-        'average revenue per user': 'Average Revenue Per User',
-        'arpu': 'Average Revenue Per User',
-        'average revenue per customer': 'Average Revenue Per Customer',
-        'arpc': 'Average Revenue Per Customer',
-    }
+    # Get unique metrics to standardize
+    unique_metrics = df['metric'].unique().tolist()
     
-    standardized_df = df.copy()
+    if not unique_metrics:
+        return df
     
-    for idx, row in df.iterrows():
-        original_metric = str(row.get('metric', '')).strip()
-        
-        # Clean up the metric name
-        cleaned_metric = original_metric.lower()
-        
-        # Remove time period prefixes (FY '26, Q1 FY '26, etc.)
-        cleaned_metric = re.sub(r'\b(fy|q[1-4])\s*[\'\']?\d{2,4}\s*', '', cleaned_metric)
-        cleaned_metric = re.sub(r'\b(full\s+year|quarter|fiscal\s+year)\s*\d{2,4}\s*', '', cleaned_metric)
-        
-        # Remove common prefixes/suffixes that add noise
-        cleaned_metric = re.sub(r'\b(gaap|non-gaap|adjusted|diluted|basic)\s+', '', cleaned_metric)
-        cleaned_metric = re.sub(r'\s+(gaap|non-gaap|adjusted|diluted|basic)\b', '', cleaned_metric)
-        
-        # Remove parenthetical content that's not GAAP/Non-GAAP
-        cleaned_metric = re.sub(r'\([^)]*\)', '', cleaned_metric)
-        cleaned_metric = cleaned_metric.strip()
-        
-        # Apply standardization
-        standardized_metric = metric_mappings.get(cleaned_metric, original_metric)
-        
-        # Preserve GAAP/Non-GAAP distinctions from original
-        if 'non-gaap' in original_metric.lower():
-            if '(Non-GAAP)' not in standardized_metric:
-                standardized_metric += ' (Non-GAAP)'
-        elif 'gaap' in original_metric.lower() and 'non-gaap' not in original_metric.lower():
-            if '(GAAP)' not in standardized_metric:
-                standardized_metric += ' (GAAP)'
-        
-        # Preserve adjusted distinction
-        if 'adjusted' in original_metric.lower() and '(Adjusted)' not in standardized_metric:
-            standardized_metric += ' (Adjusted)'
-        
-        standardized_df.at[idx, 'metric'] = standardized_metric
+    # Create prompt with regex patterns for ChatGPT to apply
+    metrics_text = "\n".join([f"- {metric}" for metric in unique_metrics])
     
-    return standardized_df
+    prompt = f"""Apply the following standardization rules to these metric names:
+
+METRICS TO STANDARDIZE:
+{metrics_text}
+
+STANDARDIZATION RULES TO APPLY:
+
+1. Remove time period prefixes using these patterns:
+   - Remove: FY '26, Q1 FY '26, Q2 FY '25, etc. (pattern: \\b(fy|q[1-4])\\s*[\\'\']?\\d{{2,4}}\\s*)
+   - Remove: full year 2024, quarter 2025, fiscal year 2026, etc. (pattern: \\b(full\\s+year|quarter|fiscal\\s+year)\\s*\\d{{2,4}}\\s*)
+
+2. Remove common prefixes/suffixes that add noise:
+   - Remove: gaap, non-gaap, adjusted, diluted, basic when they appear as prefixes/suffixes
+   - Pattern: \\b(gaap|non-gaap|adjusted|diluted|basic)\\s+ and \\s+(gaap|non-gaap|adjusted|diluted|basic)\\b
+
+3. Remove parenthetical content that's not GAAP/Non-GAAP:
+   - Pattern: \\([^)]*\\) but preserve (GAAP), (Non-GAAP), (Adjusted)
+
+4. Apply these standardized mappings where applicable:
+   - revenue/revenues/total revenue → Revenue
+   - eps/earnings per share → EPS  
+   - net income/net earnings → Net Income
+   - ebitda → EBITDA
+   - cash flow → Cash Flow
+   - operating cash flow → Operating Cash Flow
+   - free cash flow → Free Cash Flow
+   - gross margin → Gross Margin
+   - capex/capital expenditures → CapEx
+   - subscription revenue → Subscription Revenue
+   - product revenue → Product Revenue
+   - service revenue → Service Revenue
+
+5. Preserve GAAP/Non-GAAP distinctions:
+   - If original contains "non-gaap" OR "adjusted", add "(Non-GAAP)" suffix (treat adjusted and non-GAAP as the same)
+   - If original contains "gaap" but not "non-gaap" and not "adjusted", add "(GAAP)" suffix
+   - NEVER use both (Non-GAAP) and (Adjusted) - they are the same thing
+
+6. Use proper capitalization and preserve business segment names exactly.
+
+Return ONLY a simple mapping in this format:
+Original Metric → Standardized Metric
+Original Metric → Standardized Metric
+...
+
+Do not include any other text or explanations."""
+
+    try:
+        import streamlit as st
+        
+        # Use provided client or fall back to creating one
+        if client is None:
+            from openai import OpenAI
+            client = OpenAI(api_key=st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY"))
+        
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+        )
+        
+        standardization_text = response.choices[0].message.content
+        
+        # Parse the response to create mapping
+        standardization_map = {}
+        for line in standardization_text.strip().split('\n'):
+            if '→' in line:
+                parts = line.split('→')
+                if len(parts) == 2:
+                    original = parts[0].strip()
+                    standardized = parts[1].strip()
+                    standardization_map[original] = standardized
+        
+        # Apply the standardization
+        standardized_df = df.copy()
+        for idx, row in df.iterrows():
+            original_metric = str(row.get('metric', '')).strip()
+            if original_metric in standardization_map:
+                standardized_df.at[idx, 'metric'] = standardization_map[original_metric]
+        
+        return standardized_df
+        
+    except Exception as e:
+        st.warning(f"Error in ChatGPT metric standardization: {str(e)}")
+        return df
 
 def format_guidance_values(df):
     """Replace NULL values with value_or_range text - never show NULL"""
@@ -594,7 +393,7 @@ def format_guidance_values(df):
     
     return formatted_df
 
-def process_guidance_table(table_text, source_type="SEC"):
+def process_guidance_table(table_text, source_type="SEC", client=None, model_name="gpt-4o-mini"):
     """Process guidance table text into DataFrame"""
     if not table_text or "|" not in table_text:
         return None
@@ -607,8 +406,8 @@ def process_guidance_table(table_text, source_type="SEC"):
         column_names = [c.strip().lower().replace(' ', '_') for c in rows[0]]
         df = pd.DataFrame(rows[1:], columns=column_names)
         
-        # Standardize metric names first
-        df = standardize_metric_names(df)
+        # Standardize metric names first - pass client and model_name
+        df = standardize_metric_names(df, client, model_name)
         
         # Format values
         df = format_guidance_values(df)

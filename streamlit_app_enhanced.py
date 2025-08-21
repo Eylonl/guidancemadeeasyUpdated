@@ -652,7 +652,7 @@ with main_tab1:
                         if found_guidance:
                             table = extract_guidance(guidance_paragraphs, ticker, client, model_id)
                             
-                            df = process_guidance_table(table, "SEC 8-K")
+                            df = process_guidance_table(table, "SEC 8-K", client, model_id)
                             if df is not None and not df.empty and len(df) > 0:
                                 df["filing_date"] = date_str
                                 df["filing_url"] = url
@@ -701,7 +701,7 @@ with main_tab1:
                         # Extract guidance from transcript
                         st.write("Extracting guidance from transcript...")
                         table = extract_transcript_guidance(transcript, ticker, client, model_id)
-                        df = process_guidance_table(table, "Transcript")
+                        df = process_guidance_table(table, "Transcript", client, model_id)
                         if df is not None and not df.empty:
                             # Use SEC filing date if available, otherwise use quarter format
                             df["filing_date"] = sec_filing_date if sec_filing_date else f"{year_num}-Q{quarter_num}"
@@ -754,7 +754,7 @@ with main_tab1:
                                 display_year = target_fiscal_year
                                 st.write(f"Extracting guidance from {ticker} Q{quarter} {display_year} transcript...")
                                 table = extract_transcript_guidance(transcript, ticker, client, model_id)
-                                df = process_guidance_table(table, "Transcript")
+                                df = process_guidance_table(table, "Transcript", client, model_id)
                                 if df is not None and not df.empty:
                                     df["filing_date"] = f"{display_year}-Q{quarter}"
                                     source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
@@ -770,7 +770,7 @@ with main_tab1:
                 if transcript:
                     st.write("Extracting guidance from most recent transcript...")
                     table = extract_transcript_guidance(transcript, ticker, client, model_id)
-                    df = process_guidance_table(table, "Transcript")
+                    df = process_guidance_table(table, "Transcript", client, model_id)
                     if df is not None and not df.empty:
                         # Use SEC filing date if available, otherwise "Most Recent"
                         df["filing_date"] = sec_filing_date if sec_filing_date else "Most Recent"
@@ -848,7 +848,7 @@ with main_tab1:
                                     st.success(f"Found potential guidance in {doc['file_type']} ({len(guidance_paragraphs):,} chars after filtering)")
                                     table = extract_guidance(guidance_paragraphs, ticker, client, model_id)
                                     
-                                    df = process_guidance_table(table, f"Uploaded {doc['file_type']}")
+                                    df = process_guidance_table(table, f"Uploaded {doc['file_type']}", client, model_id)
                                     if df is not None and not df.empty:
                                         df["filing_date"] = f"{doc['year']}-{doc['quarter']}"
                                         df["filing_url"] = f"Uploaded: {doc.get('storage_path', 'Unknown')}"
