@@ -548,6 +548,10 @@ def standardize_metric_names(df):
         # Clean up the metric name
         cleaned_metric = original_metric.lower()
         
+        # Remove time period prefixes (FY '26, Q1 FY '26, etc.)
+        cleaned_metric = re.sub(r'\b(fy|q[1-4])\s*[\'\']?\d{2,4}\s*', '', cleaned_metric)
+        cleaned_metric = re.sub(r'\b(full\s+year|quarter|fiscal\s+year)\s*\d{2,4}\s*', '', cleaned_metric)
+        
         # Remove common prefixes/suffixes that add noise
         cleaned_metric = re.sub(r'\b(gaap|non-gaap|adjusted|diluted|basic)\s+', '', cleaned_metric)
         cleaned_metric = re.sub(r'\s+(gaap|non-gaap|adjusted|diluted|basic)\b', '', cleaned_metric)
