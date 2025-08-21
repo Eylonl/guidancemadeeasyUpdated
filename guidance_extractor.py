@@ -542,76 +542,16 @@ def standardize_metric_names(df):
     return standardized_df
 
 def format_guidance_values(df):
-    """Format the numeric values to appropriate formats based on the metric and value types"""
+    """Replace NULL values with empty strings so ChatGPT can fill them in properly"""
     formatted_df = df.copy()
     for idx, row in df.iterrows():
-        value_text = str(row.get('value_or_range', ''))
-        is_percentage = '%' in value_text
-        is_dollar = '$' in value_text
-
         for col in ['low', 'high', 'average']:
             if col in df.columns:
                 cell_value = row.get(col)
-                # Handle N/A, null, empty, or non-numeric values by using original value
+                # Replace NULL/None values with empty string so ChatGPT fills them
                 if pd.isnull(cell_value) or str(cell_value).strip().upper() in ['N/A', 'NA', 'NULL', 'TBD', '', '-', 'NONE']:
-                    # Always show the value_or_range text instead of NULL/None
-                    formatted_df.at[idx, col] = value_text
-                else:
-                    try:
-                        val = float(cell_value)
-                        if is_percentage:
-                            formatted_df.at[idx, col] = f"{val:.1f}%"
-                        elif is_dollar:
-                            if abs(val) >= 100:
-                                formatted_df.at[idx, col] = f"${val:.0f}"
-                            elif abs(val) >= 10:
-                                formatted_df.at[idx, col] = f"${val:.1f}"
-                            else:
-                                formatted_df.at[idx, col] = f"${val:.2f}"
-                        else:
-                            formatted_df.at[idx, col] = str(val)
-                    except:
-                        # If can't convert to float, use original value
-                        formatted_df.at[idx, col] = value_text
+                    formatted_df.at[idx, col] = ""
     
-    # Check if DataFrame is empty or contains no valid guidance
-    if df.empty:
-        return None
-            
-    # Filter out rows with no meaningful data
-    valid_rows = []
-    for _, row in df.iterrows():
-        metric = str(row.get('metric', '')).strip()
-        value = str(row.get('value_or_range', '')).strip()
-        
-        # Skip rows that are empty, placeholder values, or pure separators
-        is_separator_row = (metric == '-----------------' or 
-                           (metric.startswith('-') and len(metric.replace('-', '').strip()) == 0))
-        
-        if (metric and metric not in ['', 'N/A', 'n/a', 'TBD', 'tbd'] and
-            value and value not in ['', 'N/A', 'n/a', 'TBD', 'tbd'] and
-            not is_separator_row):
-            valid_rows.append(row)
-    
-    # If no real guidance found, return None (don't show separator-only tables)
-    if not valid_rows:
-        return None
-    
-    # We have real guidance, so include separator rows for formatting
-    final_rows = []
-    for _, row in df.iterrows():
-        metric = str(row.get('metric', '')).strip()
-        value = str(row.get('value_or_range', '')).strip()
-        
-        # Include all rows that have content (including separators) when we have real guidance
-        if metric or value:
-            final_rows.append(row)
-    
-    if final_rows:
-        formatted_df = pd.DataFrame(final_rows)
-    else:
-        return None
-            
     return formatted_df
 
 def process_guidance_table(table_text, source_type="SEC"):
