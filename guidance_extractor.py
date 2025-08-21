@@ -554,20 +554,25 @@ def format_guidance_values(df):
                 cell_value = row.get(col)
                 # Handle N/A, null, empty, or non-numeric values by using clean numeric value
                 if pd.isnull(cell_value) or str(cell_value).strip().upper() in ['N/A', 'NA', 'NULL', 'TBD', '', '-', 'NONE']:
-                    # Extract numeric value from value_or_range text, removing words like 'billion', 'million'
+                    # Extract scaled numeric value from value_or_range text (e.g., "7.7 billion" -> "7.7")
                     clean_value = value_text
-                    # Remove common text and keep only numbers, decimals, percentages, and dollar signs
                     import re
                     if '%' in clean_value:
                         # For percentages, extract just the number and %
                         match = re.search(r'([\d.]+)%', clean_value)
                         if match:
                             clean_value = match.group(1) + '%'
-                    elif '$' in clean_value or 'billion' in clean_value.lower() or 'million' in clean_value.lower():
-                        # For dollar amounts, extract numeric value and convert to actual number
-                        # Remove text like 'billion', 'million' and extract the numeric part
-                        clean_value = re.sub(r'\b(billion|million|thousand)\b', '', clean_value, flags=re.IGNORECASE)
-                        clean_value = re.sub(r'[^\d.\$]', '', clean_value)
+                    else:
+                        # Extract the scaled number (e.g., "7.7" from "7.7 billion", "8.8" from "8.8M")
+                        # Look for patterns like "7.7 billion", "$7.7 billion", "8.8M", "$8.8M"
+                        match = re.search(r'[\$]?([\d.]+)\s*(?:billion|million|thousand|B|M|K)\b', clean_value, re.IGNORECASE)
+                        if match:
+                            clean_value = match.group(1)
+                        else:
+                            # If no scale found, try to extract just the number
+                            match = re.search(r'[\$]?([\d.]+)', clean_value)
+                            if match:
+                                clean_value = match.group(1)
                     formatted_df.at[idx, col] = clean_value
                 else:
                     try:
@@ -575,16 +580,22 @@ def format_guidance_values(df):
                         # Just display the number without formatting
                         formatted_df.at[idx, col] = str(val)
                     except:
-                        # If can't convert to float, clean the original value
+                        # If can't convert to float, extract scaled value from original text
                         clean_value = value_text
                         import re
                         if '%' in clean_value:
                             match = re.search(r'([\d.]+)%', clean_value)
                             if match:
                                 clean_value = match.group(1) + '%'
-                        elif '$' in clean_value or 'billion' in clean_value.lower() or 'million' in clean_value.lower():
-                            clean_value = re.sub(r'\b(billion|million|thousand)\b', '', clean_value, flags=re.IGNORECASE)
-                            clean_value = re.sub(r'[^\d.\$]', '', clean_value)
+                        else:
+                            # Extract the scaled number
+                            match = re.search(r'[\$]?([\d.]+)\s*(?:billion|million|thousand|B|M|K)\b', clean_value, re.IGNORECASE)
+                            if match:
+                                clean_value = match.group(1)
+                            else:
+                                match = re.search(r'[\$]?([\d.]+)', clean_value)
+                                if match:
+                                    clean_value = match.group(1)
                         formatted_df.at[idx, col] = clean_value
     
     # Check if DataFrame is empty or contains no valid guidance
