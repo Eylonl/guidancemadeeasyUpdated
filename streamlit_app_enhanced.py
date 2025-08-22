@@ -763,6 +763,13 @@ with main_tab1:
                                 actual_quarter = metadata.get('quarter', f'Q{quarter}') if metadata else f'Q{quarter}'
                                 actual_year = metadata.get('year', target_fiscal_year) if metadata else target_fiscal_year
                                 
+                                # Skip if requested period doesn't match actual metadata period
+                                requested_quarter = f'Q{quarter}'
+                                requested_year = target_fiscal_year
+                                if actual_quarter != requested_quarter or actual_year != requested_year:
+                                    st.info(f"Skipping {requested_quarter} {requested_year}: actual transcript is {actual_quarter} {actual_year}")
+                                    continue
+                                
                                 # Create unique identifier for this transcript
                                 transcript_id = f"{ticker}_{actual_quarter}_{actual_year}"
                                 
