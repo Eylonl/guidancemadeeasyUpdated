@@ -2,48 +2,56 @@ import streamlit as st
 import pandas as pd
 from typing import List, Dict, Tuple
 
-def detect_duplicates(df: pd.DataFrame) -> List[int]:
+def detect_duplicates(df: pd.DataFrame, client=None, model_name="gpt-4o") -> List[int]:
     """
-    Detect duplicate guidance entries with same metric, period, and filing_date but different low/high values
+    Use ChatGPT to detect duplicate guidance entries that represent conflicting information
     Returns list of row indices that are duplicates (to be highlighted)
     """
-    if df.empty:
+    if df.empty or client is None:
         return []
     
-    duplicate_indices = []
+    # Convert DataFrame to a readable format for ChatGPT
+    df_text = df.to_string(index=True)
     
-    # Group by metric, period, and filing_date to properly identify duplicates
-    grouping_cols = ['metric', 'period', 'filing_date']
-    
-    # Check if all required columns exist
-    if not all(col in df.columns for col in grouping_cols):
+    prompt = f"""You are analyzing financial guidance data to identify true duplicates that represent conflicting information.
+
+Here is the guidance data:
+{df_text}
+
+RULES FOR IDENTIFYING DUPLICATES:
+1. Only flag entries as duplicates if they have the SAME metric, period, and represent CONFLICTING values
+2. Do NOT flag entries as duplicates if they have identical values (e.g., 28.0% and 28% are the same)
+3. Do NOT flag entries as duplicates if they are from the same source and date
+4. Only flag when there are genuinely different guidance values for the same metric and period
+
+Return ONLY a Python list of row indices (numbers) that should be highlighted as duplicates.
+If no true duplicates exist, return an empty list: []
+
+Example response format: [5, 12, 15] or []"""
+
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
+        )
+        
+        result_text = response.choices[0].message.content.strip()
+        
+        # Parse the response to extract indices
+        import ast
+        try:
+            duplicate_indices = ast.literal_eval(result_text)
+            if isinstance(duplicate_indices, list):
+                return duplicate_indices
+        except:
+            pass
+            
         return []
-    
-    # Clean whitespace in grouping columns to catch duplicates with spacing differences
-    df_clean = df.copy()
-    for col in grouping_cols:
-        if col in df_clean.columns:
-            df_clean[col] = df_clean[col].astype(str).str.strip()
-    
-    grouped = df_clean.groupby(grouping_cols)
-    
-    for group_key, group_df in grouped:
-        if len(group_df) > 1:
-            # Check if low/high values are actually different
-            low_values = group_df['low'].unique()
-            high_values = group_df['high'].unique()
-            
-            # Only flag as duplicates if values are truly different
-            # Remove NaN values for comparison
-            low_values_clean = [v for v in low_values if pd.notna(v)]
-            high_values_clean = [v for v in high_values if pd.notna(v)]
-            
-            if len(low_values_clean) > 1 or len(high_values_clean) > 1:
-                # Add all indices in this duplicate group to the list
-                original_indices = df.loc[group_df.index].index.tolist()
-                duplicate_indices.extend(original_indices)
-    
-    return duplicate_indices
+        
+    except Exception as e:
+        print(f"Error in ChatGPT duplicate detection: {e}")
+        return []
 
 def highlight_duplicates(df: pd.DataFrame, duplicate_indices: List[int]) -> pd.DataFrame:
     """
