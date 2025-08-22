@@ -750,17 +750,18 @@ with main_tab1:
                             else:
                                 transcript, error, metadata = get_transcript_for_quarter(ticker, quarter, target_fiscal_year)
                             if transcript:
-                                # Use fiscal year for display
-                                display_year = target_fiscal_year
-                                st.write(f"Extracting guidance from {ticker} Q{quarter} {display_year} transcript...")
+                                # Use actual metadata for display instead of requested parameters
+                                actual_quarter = metadata.get('quarter', f'Q{quarter}') if metadata else f'Q{quarter}'
+                                actual_year = metadata.get('year', target_fiscal_year) if metadata else target_fiscal_year
+                                st.write(f"Extracting guidance from {ticker} {actual_quarter} {actual_year} transcript...")
                                 table = extract_transcript_guidance(transcript, ticker, client, model_id)
                                 df = process_guidance_table(table, "Transcript", client, model_id)
                                 if df is not None and not df.empty:
-                                    df["filing_date"] = f"{display_year}-Q{quarter}"
+                                    df["filing_date"] = f"{actual_year}-{actual_quarter}"
                                     source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
-                                    df["filing_url"] = f"{source} Transcript Q{quarter} {display_year}"
+                                    df["filing_url"] = f"{source} Transcript {actual_quarter} {actual_year}"
                                     all_results.append(df)
-                                    st.success(f"Guidance extracted from Q{quarter} {display_year} transcript.")
+                                    st.success(f"Guidance extracted from {actual_quarter} {actual_year} transcript.")
                                     st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
                 except ValueError:
                     st.error("Invalid year input. Must be a number.")
