@@ -983,10 +983,22 @@ with main_tab1:
             # Always show download - no duplicate resolution needed
             st.success("✅ Results ready for download!")
             
-            # Create Excel download
+            # Create Excel download with duplicate highlighting
             excel_buffer = BytesIO()
             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
                 combined.to_excel(writer, sheet_name='Guidance_Data', index=False)
+                
+                # Apply highlighting to duplicates in Excel
+                if duplicate_indices:
+                    from openpyxl.styles import PatternFill
+                    worksheet = writer.sheets['Guidance_Data']
+                    yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+                    
+                    for idx in duplicate_indices:
+                        # Excel rows are 1-indexed and we need to account for header
+                        excel_row = idx + 2
+                        for col in range(1, len(combined.columns) + 1):
+                            worksheet.cell(row=excel_row, column=col).fill = yellow_fill
             
             excel_buffer.seek(0)  # Reset buffer position
             
@@ -1038,10 +1050,22 @@ if False:  # Disabled duplicate section
     # Always show download - no duplicate resolution needed
     st.success("✅ Results ready for download!")
     
-    # Create Excel download
+    # Create Excel download with duplicate highlighting
     excel_buffer = BytesIO()
     with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
         combined.to_excel(writer, sheet_name='Guidance_Data', index=False)
+        
+        # Apply highlighting to duplicates in Excel
+        if duplicate_indices:
+            from openpyxl.styles import PatternFill
+            worksheet = writer.sheets['Guidance_Data']
+            yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+            
+            for idx in duplicate_indices:
+                # Excel rows are 1-indexed and we need to account for header
+                excel_row = idx + 2
+                for col in range(1, len(combined.columns) + 1):
+                    worksheet.cell(row=excel_row, column=col).fill = yellow_fill
     
     excel_buffer.seek(0)  # Reset buffer position
     
