@@ -16,7 +16,7 @@ Return a structured table containing the following columns:
 
 - metric (STANDARDIZE metric names to clean, consistent formats while preserving business segments and GAAP/Non-GAAP distinctions. Examples: "FY '26 subscription revenue" becomes "Subscription Revenue", "Q1 FY '26 non-GAAP EPS" becomes "EPS (Non-GAAP)", "Productivity and Business Processes revenue" stays "Productivity and Business Processes Revenue", "Azure revenue" stays "Azure Revenue". Remove time period prefixes (FY '26, Q1, etc.) but keep segment names and accounting standards. Add (GAAP) or (Non-GAAP) suffixes where applicable. Use proper capitalization.)
 - value_or_range (e.g. $1.5B–$1.6B or $2.05 or $(0.05) to $0.10 - EXACTLY as it appears in the text)
-- period (MUST extract the EXACT specific period from the text - e.g. "Q1 FY26", "Q3 FY24", "Full Year 2025", "fiscal 2026 first quarter", "fiscal 2026 full year". DO NOT use generic terms like "Quarter" or "Full Year" - always include the specific year and quarter/period mentioned in the guidance)
+- period (MUST standardize to consistent format: "Q1 FY26", "Q2 FY25", "Q3 FY24", "Q4 FY23" for quarters OR "Full Year 2026", "Full Year 2025" for full years. Convert from any format like "fiscal 2026 first quarter" → "Q1 FY26", "fiscal 2026 full year" → "Full Year 2026", "first quarter fiscal 2025" → "Q1 FY25")
 - period_type (MUST be either "Quarter" or "Full Year" based on the period text)
 - low (numeric low end of the range, or the single value if not a range)
 - high (numeric high end of the range, or the single value if not a range)
@@ -184,7 +184,7 @@ Return a structured table containing the following columns:
 
 - metric (STANDARDIZE metric names to clean, consistent formats while preserving business segments and GAAP/Non-GAAP distinctions. Examples: "FY '26 subscription revenue" becomes "Subscription Revenue", "Q1 FY '26 non-GAAP EPS" becomes "EPS (Non-GAAP)", "Productivity and Business Processes revenue" stays "Productivity and Business Processes Revenue", "Azure revenue" stays "Azure Revenue". Remove time period prefixes (FY '26, Q1, etc.) but keep segment names and accounting standards. Add (GAAP) or (Non-GAAP) suffixes where applicable. Use proper capitalization.)
 - value_or_range (e.g. $1.5B–$1.6B or $2.05 or $(0.05) to $0.10 - EXACTLY as it appears in the text)
-- period (MUST extract the EXACT specific period from the text - e.g. "Q1 FY26", "Q3 FY24", "Full Year 2025", "fiscal 2026 first quarter", "fiscal 2026 full year". DO NOT use generic terms like "Quarter" or "Full Year" - always include the specific year and quarter/period mentioned in the guidance)
+- period (MUST standardize to consistent format: "Q1 FY26", "Q2 FY25", "Q3 FY24", "Q4 FY23" for quarters OR "Full Year 2026", "Full Year 2025" for full years. Convert from any format like "fiscal 2026 first quarter" → "Q1 FY26", "fiscal 2026 full year" → "Full Year 2026", "first quarter fiscal 2025" → "Q1 FY25")
 - period_type (MUST be either "Quarter" or "Full Year" based on the period text)
 - low (numeric low end of the range, or the single value if not a range)
 - high (numeric high end of the range, or the single value if not a range)
