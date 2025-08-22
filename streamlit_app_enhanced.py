@@ -62,39 +62,6 @@ def is_cik_format(s):
 # ---- Streamlit UI Setup ----
 
 st.set_page_config(page_title="Enhanced SEC 8-K & Transcript Guidance Extractor", layout="centered")
-
-# Add custom CSS and JavaScript for scroll to bottom functionality
-st.markdown("""
-<style>
-.scroll-button {
-    position: fixed;
-    top: 15px;
-    right: 60px;
-    z-index: 9999;
-    background-color: #ff4b4b;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    padding: 10px 15px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-.scroll-button:hover {
-    background-color: #ff6b6b;
-    transform: scale(1.05);
-}
-</style>
-""", unsafe_allow_html=True)
-
-# Add the button with JavaScript
-st.markdown("""
-<button class="scroll-button" onclick="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})">
-⬇️ Bottom
-</button>
-""", unsafe_allow_html=True)
-
 st.title("Enhanced SEC 8-K & Transcript Guidance Extractor")
 st.markdown("**Extract Guidance from SEC filings and Earnings Call Transcripts with AI.**")
 
