@@ -989,12 +989,28 @@ with main_tab1:
             # Create Excel download with duplicate highlighting
             excel_buffer = BytesIO()
             with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-                combined.to_excel(writer, sheet_name='Guidance_Data', index=False)
+                # Reorder columns to flip filing_date and source_type
+                column_order = list(combined.columns)
+                if 'filing_date' in column_order and 'source_type' in column_order:
+                    filing_date_idx = column_order.index('filing_date')
+                    source_type_idx = column_order.index('source_type')
+                    column_order[filing_date_idx], column_order[source_type_idx] = column_order[source_type_idx], column_order[filing_date_idx]
+                
+                combined_reordered = combined[column_order]
+                combined_reordered.to_excel(writer, sheet_name='Guidance_Data', index=False)
+                
+                # Apply formatting to Excel
+                from openpyxl.styles import PatternFill, Alignment
+                worksheet = writer.sheets['Guidance_Data']
+                
+                # Center align all columns except metric (column A)
+                center_alignment = Alignment(horizontal='center')
+                for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row, min_col=2, max_col=worksheet.max_column):
+                    for cell in row:
+                        cell.alignment = center_alignment
                 
                 # Apply highlighting to duplicates in Excel
                 if duplicate_indices:
-                    from openpyxl.styles import PatternFill
-                    worksheet = writer.sheets['Guidance_Data']
                     yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
                     
                     for idx in duplicate_indices:
@@ -1056,12 +1072,28 @@ if False:  # Disabled duplicate section
     # Create Excel download with duplicate highlighting
     excel_buffer = BytesIO()
     with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-        combined.to_excel(writer, sheet_name='Guidance_Data', index=False)
+        # Reorder columns to flip filing_date and source_type
+        column_order = list(combined.columns)
+        if 'filing_date' in column_order and 'source_type' in column_order:
+            filing_date_idx = column_order.index('filing_date')
+            source_type_idx = column_order.index('source_type')
+            column_order[filing_date_idx], column_order[source_type_idx] = column_order[source_type_idx], column_order[filing_date_idx]
+        
+        combined_reordered = combined[column_order]
+        combined_reordered.to_excel(writer, sheet_name='Guidance_Data', index=False)
+        
+        # Apply formatting to Excel
+        from openpyxl.styles import PatternFill, Alignment
+        worksheet = writer.sheets['Guidance_Data']
+        
+        # Center align all columns except metric (column A)
+        center_alignment = Alignment(horizontal='center')
+        for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row, min_col=2, max_col=worksheet.max_column):
+            for cell in row:
+                cell.alignment = center_alignment
         
         # Apply highlighting to duplicates in Excel
         if duplicate_indices:
-            from openpyxl.styles import PatternFill
-            worksheet = writer.sheets['Guidance_Data']
             yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
             
             for idx in duplicate_indices:
