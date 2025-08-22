@@ -20,6 +20,9 @@ from guidance_extractor import (
     extract_guidance, extract_transcript_guidance, 
     process_guidance_table
 )
+import importlib
+import duplicate_handler
+importlib.reload(duplicate_handler)
 from duplicate_handler import (
     detect_duplicates, highlight_duplicates, reset_duplicate_state
 )
