@@ -1003,9 +1003,9 @@ with main_tab1:
                 from openpyxl.styles import PatternFill, Alignment
                 worksheet = writer.sheets['Guidance_Data']
                 
-                # Center align all columns except metric (column A)
+                # Center align columns starting from column E (skip A, B, C, D)
                 center_alignment = Alignment(horizontal='center')
-                for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row, min_col=2, max_col=worksheet.max_column):
+                for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row, min_col=5, max_col=worksheet.max_column):
                     for cell in row:
                         cell.alignment = center_alignment
                 
@@ -1086,9 +1086,9 @@ if False:  # Disabled duplicate section
         from openpyxl.styles import PatternFill, Alignment
         worksheet = writer.sheets['Guidance_Data']
         
-        # Center align all columns except metric (column A)
+        # Center align columns starting from column E (skip A, B, C, D)
         center_alignment = Alignment(horizontal='center')
-        for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row, min_col=2, max_col=worksheet.max_column):
+        for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row, min_col=5, max_col=worksheet.max_column):
             for cell in row:
                 cell.alignment = center_alignment
         
