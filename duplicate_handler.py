@@ -32,7 +32,13 @@ def detect_duplicates(df: pd.DataFrame) -> List[int]:
             # Check if low/high values are actually different
             low_values = group_df['low'].unique()
             high_values = group_df['high'].unique()
-            if len(low_values) > 1 or len(high_values) > 1:
+            
+            # Only flag as duplicates if values are truly different
+            # Remove NaN values for comparison
+            low_values_clean = [v for v in low_values if pd.notna(v)]
+            high_values_clean = [v for v in high_values if pd.notna(v)]
+            
+            if len(low_values_clean) > 1 or len(high_values_clean) > 1:
                 # Add all indices in this duplicate group to the list
                 original_indices = df.loc[group_df.index].index.tolist()
                 duplicate_indices.extend(original_indices)
