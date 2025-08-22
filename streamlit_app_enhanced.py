@@ -748,7 +748,8 @@ with main_tab1:
                     processed_transcripts = set()
                     
                     # Get transcripts for fiscal years going back from current fiscal year
-                    for year_offset in range(years_back + 1):
+                    # Add one quarter (0.25 years) to include Q4 of the year before the range
+                    for year_offset in range(years_back + 2):
                         target_fiscal_year = current_fiscal_year - year_offset
                         for quarter in [4, 3, 2, 1]:
                             # Get fiscal quarter information to determine proper calendar dates
