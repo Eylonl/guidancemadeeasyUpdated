@@ -51,10 +51,45 @@ def fetch_transcript_apininjas(ticker, year=None, quarter=None):
             if data and 'transcript' in data:
                 transcript_text = data['transcript']
                 
-                # Create metadata
+                # Extract actual quarter/year from transcript content if possible
+                actual_quarter = quarter
+                actual_year = year
+                
+                # Try to extract actual reporting period from transcript
+                if transcript_text:
+                    # Look for fiscal year patterns in the transcript
+                    fy_match = re.search(r'fiscal (\d{4})', transcript_text.lower())
+                    quarter_match = re.search(r'(first|second|third|fourth|q[1-4])\s+quarter', transcript_text.lower())
+                    
+                    if fy_match:
+                        extracted_year = int(fy_match.group(1))
+                        # If extracted year is in the future, it's likely wrong
+                        current_year = datetime.now().year
+                        if extracted_year > current_year + 1:
+                            actual_year = current_year
+                        else:
+                            actual_year = extracted_year
+                    
+                    if quarter_match:
+                        quarter_text = quarter_match.group(1).lower()
+                        if quarter_text in ['first', 'q1']:
+                            actual_quarter = 'Q1'
+                        elif quarter_text in ['second', 'q2']:
+                            actual_quarter = 'Q2'
+                        elif quarter_text in ['third', 'q3']:
+                            actual_quarter = 'Q3'
+                        elif quarter_text in ['fourth', 'q4']:
+                            actual_quarter = 'Q4'
+                
+                # Validate the year - don't allow future years beyond next year
+                current_year = datetime.now().year
+                if actual_year and actual_year > current_year + 1:
+                    actual_year = current_year
+                
+                # Create metadata with validated data
                 metadata = {
-                    'quarter': quarter or 'Latest',
-                    'year': year or datetime.now().year,
+                    'quarter': actual_quarter or 'Latest',
+                    'year': actual_year or current_year,
                     'company': ticker.upper(),
                     'source': 'APINinjas'
                 }
