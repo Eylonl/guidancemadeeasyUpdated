@@ -703,8 +703,14 @@ with main_tab1:
                         table = extract_transcript_guidance(transcript, ticker, client, model_id)
                         df = process_guidance_table(table, "Transcript", client, model_id)
                         if df is not None and not df.empty:
-                            # Use SEC filing date if available, otherwise use quarter format
-                            df["filing_date"] = sec_filing_date if sec_filing_date else f"{year_num}-Q{quarter_num}"
+                            # Use actual earnings date if available, otherwise fall back to SEC filing date or quarter format
+                            earnings_date = metadata.get('earnings_date') if metadata else None
+                            if earnings_date:
+                                df["filing_date"] = earnings_date
+                            elif sec_filing_date:
+                                df["filing_date"] = sec_filing_date
+                            else:
+                                df["filing_date"] = f"{year_num}-Q{quarter_num}"
                             source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
                             df["filing_url"] = f"{source} Transcript"
                             all_results.append(df)
@@ -771,7 +777,12 @@ with main_tab1:
                                 table = extract_transcript_guidance(transcript, ticker, client, model_id)
                                 df = process_guidance_table(table, "Transcript", client, model_id)
                                 if df is not None and not df.empty:
-                                    df["filing_date"] = f"{actual_year}-{actual_quarter}"
+                                    # Use actual earnings date if available, otherwise fall back to quarter format
+                                    earnings_date = metadata.get('earnings_date') if metadata else None
+                                    if earnings_date:
+                                        df["filing_date"] = earnings_date
+                                    else:
+                                        df["filing_date"] = f"{actual_year}-{actual_quarter}"
                                     source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
                                     df["filing_url"] = f"{source} Transcript {actual_quarter} {actual_year}"
                                     all_results.append(df)
@@ -787,8 +798,14 @@ with main_tab1:
                     table = extract_transcript_guidance(transcript, ticker, client, model_id)
                     df = process_guidance_table(table, "Transcript", client, model_id)
                     if df is not None and not df.empty:
-                        # Use SEC filing date if available, otherwise "Most Recent"
-                        df["filing_date"] = sec_filing_date if sec_filing_date else "Most Recent"
+                        # Use actual earnings date if available, otherwise fall back to SEC filing date or "Most Recent"
+                        earnings_date = metadata.get('earnings_date') if metadata else None
+                        if earnings_date:
+                            df["filing_date"] = earnings_date
+                        elif sec_filing_date:
+                            df["filing_date"] = sec_filing_date
+                        else:
+                            df["filing_date"] = "Most Recent"
                         source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
                         df["filing_url"] = f"Most Recent {source} Transcript"
                         all_results.append(df)

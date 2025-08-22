@@ -55,11 +55,40 @@ def fetch_transcript_apininjas(ticker, year=None, quarter=None):
                 actual_quarter = quarter
                 actual_year = year
                 
-                # Try to extract actual reporting period from transcript
+                # Try to extract actual reporting period and earnings date from transcript
+                earnings_date = None
                 if transcript_text:
                     # Look for fiscal year patterns in the transcript
                     fy_match = re.search(r'fiscal (\d{4})', transcript_text.lower())
                     quarter_match = re.search(r'(first|second|third|fourth|q[1-4])\s+quarter', transcript_text.lower())
+                    
+                    # Try to extract earnings call date from transcript
+                    # Common patterns for earnings call dates
+                    date_patterns = [
+                        r'(\w+\s+\d{1,2},\s+\d{4})',  # "January 25, 2024"
+                        r'(\d{1,2}/\d{1,2}/\d{4})',   # "1/25/2024"
+                        r'(\d{4}-\d{2}-\d{2})',       # "2024-01-25"
+                        r'((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+\d{4})'  # case insensitive month names
+                    ]
+                    
+                    # Look for date patterns in the first 1000 characters (header area)
+                    header_text = transcript_text[:1000].lower()
+                    for pattern in date_patterns:
+                        date_match = re.search(pattern, header_text, re.IGNORECASE)
+                        if date_match:
+                            try:
+                                date_str = date_match.group(1)
+                                # Try to parse the date
+                                if '/' in date_str:
+                                    earnings_date = datetime.strptime(date_str, '%m/%d/%Y').strftime('%Y-%m-%d')
+                                elif '-' in date_str:
+                                    earnings_date = date_str
+                                else:
+                                    # Handle month name formats
+                                    earnings_date = datetime.strptime(date_str, '%B %d, %Y').strftime('%Y-%m-%d')
+                                break
+                            except:
+                                continue
                     
                     if fy_match:
                         extracted_year = int(fy_match.group(1))
@@ -91,7 +120,8 @@ def fetch_transcript_apininjas(ticker, year=None, quarter=None):
                     'quarter': actual_quarter or 'Latest',
                     'year': actual_year or current_year,
                     'company': ticker.upper(),
-                    'source': 'APINinjas'
+                    'source': 'APINinjas',
+                    'earnings_date': earnings_date
                 }
                 
                 return transcript_text, None, metadata
@@ -147,7 +177,8 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
                         'quarter': f"Q{quarter_int}",
                         'year': year_int,
                         'company': ticker.upper(),
-                        'report_date': matching_transcript['report_date'].iloc[0]
+                        'report_date': matching_transcript['report_date'].iloc[0],
+                        'earnings_date': matching_transcript['report_date'].iloc[0]
                     }
                 
                 return transcript_text.strip(), None, metadata
@@ -180,7 +211,8 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
                 'quarter': f"Q{latest_quarter}",
                 'year': latest_year,
                 'company': ticker.upper(),
-                'report_date': latest['report_date']
+                'report_date': latest['report_date'],
+                'earnings_date': latest['report_date']
             }
             
             return transcript_text.strip(), None, metadata
