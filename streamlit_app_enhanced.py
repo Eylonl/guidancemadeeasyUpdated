@@ -68,27 +68,31 @@ st.markdown("""
 <style>
 .scroll-button {
     position: fixed;
-    top: 10px;
-    right: 120px;
-    z-index: 999;
+    top: 15px;
+    right: 60px;
+    z-index: 9999;
     background-color: #ff4b4b;
     color: white;
     border: none;
-    border-radius: 5px;
-    padding: 8px 12px;
+    border-radius: 20px;
+    padding: 10px 15px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 .scroll-button:hover {
     background-color: #ff6b6b;
+    transform: scale(1.05);
 }
 </style>
-<script>
-function scrollToBottom() {
-    window.scrollTo(0, document.body.scrollHeight);
-}
-</script>
-<button class="scroll-button" onclick="scrollToBottom()">⬇️ Scroll to Bottom</button>
+""", unsafe_allow_html=True)
+
+# Add the button with JavaScript
+st.markdown("""
+<button class="scroll-button" onclick="window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'})">
+⬇️ Bottom
+</button>
 """, unsafe_allow_html=True)
 
 st.title("Enhanced SEC 8-K & Transcript Guidance Extractor")
