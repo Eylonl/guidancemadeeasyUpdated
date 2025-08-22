@@ -974,11 +974,7 @@ with main_tab1:
             st.dataframe(display_df, use_container_width=True)
             
             # Check for duplicates and highlight them
-            try:
-                duplicate_indices = detect_duplicates(combined, client, model_id)
-            except Exception as e:
-                st.warning(f"Duplicate detection failed: {e}")
-                duplicate_indices = []
+            duplicate_indices = detect_duplicates(combined, client, model_id)
             
             if duplicate_indices:
                 st.warning(f"⚠️ Found {len(duplicate_indices)} duplicate guidance entries highlighted in yellow.")
@@ -1045,11 +1041,7 @@ if False:  # Disabled duplicate section
     st.dataframe(display_df, use_container_width=True)
     
     # Check for duplicates and highlight them
-    try:
-        duplicate_indices = detect_duplicates(combined, client, model_id)
-    except Exception as e:
-        st.warning(f"Duplicate detection failed: {e}")
-        duplicate_indices = []
+    duplicate_indices = detect_duplicates(combined, client, model_id)
     
     if duplicate_indices:
         st.warning(f"⚠️ Found {len(duplicate_indices)} duplicate guidance entries highlighted in yellow.")
