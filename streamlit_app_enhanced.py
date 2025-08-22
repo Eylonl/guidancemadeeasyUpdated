@@ -738,6 +738,9 @@ with main_tab1:
                         else:
                             current_fiscal_year = current_date.year
                     
+                    # Track processed transcripts to avoid duplicates
+                    processed_transcripts = set()
+                    
                     # Get transcripts for fiscal years going back from current fiscal year
                     for year_offset in range(years_back + 1):
                         target_fiscal_year = current_fiscal_year - year_offset
@@ -753,6 +756,17 @@ with main_tab1:
                                 # Use actual metadata for display instead of requested parameters
                                 actual_quarter = metadata.get('quarter', f'Q{quarter}') if metadata else f'Q{quarter}'
                                 actual_year = metadata.get('year', target_fiscal_year) if metadata else target_fiscal_year
+                                
+                                # Create unique identifier for this transcript
+                                transcript_id = f"{ticker}_{actual_quarter}_{actual_year}"
+                                
+                                # Skip if we've already processed this exact transcript
+                                if transcript_id in processed_transcripts:
+                                    st.info(f"Skipping duplicate: {actual_quarter} {actual_year} transcript already processed")
+                                    continue
+                                
+                                processed_transcripts.add(transcript_id)
+                                
                                 st.write(f"Extracting guidance from {ticker} {actual_quarter} {actual_year} transcript...")
                                 table = extract_transcript_guidance(transcript, ticker, client, model_id)
                                 df = process_guidance_table(table, "Transcript", client, model_id)
