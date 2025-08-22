@@ -4,7 +4,8 @@ from typing import List, Dict, Tuple
 
 def detect_duplicates(df: pd.DataFrame) -> List[int]:
     """
-    Detect duplicate guidance entries with same metric and period but different values
+    Detect duplicate guidance entries with same metric and period but different low/high values
+    Only flags as duplicates when low/high values are DIFFERENT between SEC and transcript guidance
     Returns list of row indices that are duplicates (to be highlighted)
     """
     if df.empty:
@@ -12,11 +13,16 @@ def detect_duplicates(df: pd.DataFrame) -> List[int]:
     
     duplicate_indices = []
     
-    # Group by metric, period, and filing_date to properly identify duplicates
-    grouping_cols = ['metric', 'period', 'filing_date']
+    # Group by metric and period to identify potential duplicates
+    grouping_cols = ['metric', 'period']
     
     # Check if all required columns exist
     if not all(col in df.columns for col in grouping_cols):
+        return []
+    
+    # Also need low, high, and source_type columns
+    required_cols = grouping_cols + ['low', 'high', 'source_type']
+    if not all(col in df.columns for col in required_cols):
         return []
     
     # Clean whitespace in grouping columns to catch duplicates with spacing differences
@@ -29,12 +35,18 @@ def detect_duplicates(df: pd.DataFrame) -> List[int]:
     
     for group_key, group_df in grouped:
         if len(group_df) > 1:
-            # Check if values are actually different
-            values = group_df['value_or_range'].unique()
-            if len(values) > 1:
-                # Add all indices in this duplicate group to the list
-                original_indices = df.loc[group_df.index].index.tolist()
-                duplicate_indices.extend(original_indices)
+            # Check if we have both SEC and Transcript sources
+            sources = group_df['source_type'].unique()
+            if len(sources) > 1 and any('SEC' in str(s) for s in sources) and any('Transcript' in str(s) for s in sources):
+                # Check if low/high values are different between sources
+                low_values = group_df['low'].unique()
+                high_values = group_df['high'].unique()
+                
+                # Only flag as duplicates if the low/high values are DIFFERENT
+                if len(low_values) > 1 or len(high_values) > 1:
+                    # Add all indices in this duplicate group to the list
+                    original_indices = df.loc[group_df.index].index.tolist()
+                    duplicate_indices.extend(original_indices)
     
     return duplicate_indices
 
