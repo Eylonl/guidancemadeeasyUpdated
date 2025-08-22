@@ -173,12 +173,19 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
                 
                 metadata = {}
                 if not matching_transcript.empty:
+                    report_date = matching_transcript['report_date'].iloc[0]
+                    # Ensure the date is in string format for consistency
+                    if hasattr(report_date, 'strftime'):
+                        earnings_date_str = report_date.strftime('%Y-%m-%d')
+                    else:
+                        earnings_date_str = str(report_date)
+                    
                     metadata = {
                         'quarter': f"Q{quarter_int}",
                         'year': year_int,
                         'company': ticker.upper(),
-                        'report_date': matching_transcript['report_date'].iloc[0],
-                        'earnings_date': matching_transcript['report_date'].iloc[0]
+                        'report_date': report_date,
+                        'earnings_date': earnings_date_str
                     }
                 
                 return transcript_text.strip(), None, metadata
@@ -207,12 +214,19 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
                 content = row.get('content', '')
                 transcript_text += f"{speaker}: {content}\n\n"
             
+            report_date = latest['report_date']
+            # Ensure the date is in string format for consistency
+            if hasattr(report_date, 'strftime'):
+                earnings_date_str = report_date.strftime('%Y-%m-%d')
+            else:
+                earnings_date_str = str(report_date)
+            
             metadata = {
                 'quarter': f"Q{latest_quarter}",
                 'year': latest_year,
                 'company': ticker.upper(),
-                'report_date': latest['report_date'],
-                'earnings_date': latest['report_date']
+                'report_date': report_date,
+                'earnings_date': earnings_date_str
             }
             
             return transcript_text.strip(), None, metadata

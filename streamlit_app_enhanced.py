@@ -777,11 +777,12 @@ with main_tab1:
                                 table = extract_transcript_guidance(transcript, ticker, client, model_id)
                                 df = process_guidance_table(table, "Transcript", client, model_id)
                                 if df is not None and not df.empty:
-                                    # Use actual earnings date if available, otherwise fall back to quarter format
+                                    # Use actual earnings date if available, otherwise fall back to quarter format using actual metadata
                                     earnings_date = metadata.get('earnings_date') if metadata else None
                                     if earnings_date:
                                         df["filing_date"] = earnings_date
                                     else:
+                                        # Use actual metadata year/quarter, not the requested parameters
                                         df["filing_date"] = f"{actual_year}-{actual_quarter}"
                                     source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
                                     df["filing_url"] = f"{source} Transcript {actual_quarter} {actual_year}"
