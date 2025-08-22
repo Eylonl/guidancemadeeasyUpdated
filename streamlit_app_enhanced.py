@@ -750,7 +750,7 @@ with main_tab1:
                     # Get transcripts for fiscal years going back from current fiscal year
                     for year_offset in range(years_back + 1):
                         target_fiscal_year = current_fiscal_year - year_offset
-                        for quarter in [1, 2, 3, 4]:
+                        for quarter in [4, 3, 2, 1]:
                             # Get fiscal quarter information to determine proper calendar dates
                             fiscal_info = get_fiscal_dates(ticker, quarter, target_fiscal_year, fiscal_year_end_month, fiscal_year_end_day)
                             if fiscal_info:
