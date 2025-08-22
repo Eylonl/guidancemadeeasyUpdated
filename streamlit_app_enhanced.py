@@ -748,8 +748,42 @@ with main_tab1:
                     processed_transcripts = set()
                     
                     # Get transcripts for fiscal years going back from current fiscal year
-                    # Add one quarter (0.25 years) to include Q4 of the year before the range
-                    for year_offset in range(years_back + 2):
+                    # Process the extra quarter first (Q4 of the year before the range)
+                    extra_year = current_fiscal_year - (years_back + 1)
+                    transcript, error, metadata = get_transcript_for_quarter(ticker, 4, extra_year)
+                    if transcript:
+                        actual_quarter = metadata.get('quarter', 'Q4') if metadata else 'Q4'
+                        actual_year = metadata.get('year', extra_year) if metadata else extra_year
+                        
+                        # Skip if requested period doesn't match actual metadata period
+                        if actual_quarter == 'Q4' and actual_year == extra_year:
+                            transcript_id = f"{ticker}_{actual_quarter}_{actual_year}"
+                            if transcript_id not in processed_transcripts:
+                                processed_transcripts.add(transcript_id)
+                                st.write(f"Extracting guidance from {ticker} {actual_quarter} {actual_year} transcript...")
+                                table = extract_transcript_guidance(transcript, ticker, client, model_id)
+                                df = process_guidance_table(table, "Transcript", client, model_id)
+                                if df is not None and not df.empty:
+                                    earnings_date = metadata.get('earnings_date') if metadata else None
+                                    report_date = metadata.get('report_date') if metadata else None
+                                    
+                                    if earnings_date and earnings_date not in [None, '', 'None']:
+                                        df["filing_date"] = earnings_date
+                                    elif report_date and report_date not in [None, '', 'None']:
+                                        if hasattr(report_date, 'strftime'):
+                                            df["filing_date"] = report_date.strftime('%Y-%m-%d')
+                                        else:
+                                            df["filing_date"] = str(report_date)
+                                    else:
+                                        df["filing_date"] = f"{actual_year}-{actual_quarter}"
+                                    source = metadata.get('source', 'DefeatBeta') if metadata else 'DefeatBeta'
+                                    df["filing_url"] = f"{source} Transcript {actual_quarter} {actual_year}"
+                                    all_results.append(df)
+                                    st.success(f"Guidance extracted from {actual_quarter} {actual_year} transcript.")
+                                    st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
+                    
+                    # Now process the main years range
+                    for year_offset in range(years_back + 1):
                         target_fiscal_year = current_fiscal_year - year_offset
                         for quarter in [4, 3, 2, 1]:
                             # Get fiscal quarter information to determine proper calendar dates
