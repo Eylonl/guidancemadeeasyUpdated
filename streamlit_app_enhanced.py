@@ -125,15 +125,10 @@ with main_tab1:
         index=0
     )
 
-    # Data source selection
+    # Data Sources Selection - Only SEC 8-K Filings
     st.subheader("Data Sources")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        extract_sec = st.checkbox("SEC 8-K Filings", value=True)
-    with col2:
-        extract_transcripts = st.checkbox("Earnings Transcripts", value=True)
-    with col3:
-        extract_uploaded = st.checkbox("Uploaded Documents", value=True)
+    extract_sec = True  # Always extract SEC 8-K filings
+    st.info("📋 **Data Source**: SEC 8-K Earnings Releases")
 
     # Time period selection
     st.subheader("Time Period")
@@ -685,8 +680,8 @@ with main_tab1:
                         sec_filing_date = result["filing_date"].iloc[0]
                         break
 
-        # Transcript Processing
-        if extract_transcripts:
+        # Skip transcript processing - only using 8-K filings
+        if False:
             st.subheader("Processing Earnings Transcripts")
             
             # Parse quarter input for transcript search
@@ -861,8 +856,8 @@ with main_tab1:
                     else:
                         st.warning("No guidance extracted from transcript.")
 
-        # Uploaded Documents Processing
-        if extract_uploaded:
+        # Skip uploaded document processing - only using 8-K filings
+        if False:
             st.subheader("Processing Uploaded Documents")
             
             # Determine search parameters
