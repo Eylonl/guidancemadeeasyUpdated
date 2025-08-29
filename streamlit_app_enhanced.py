@@ -15,7 +15,7 @@ from edgar_enhanced import (
     lookup_cik, get_ticker_from_cik, get_accessions, 
     get_ex99_1_links, find_guidance_paragraphs
 )
-from transcript_provider import get_transcript_for_quarter
+# Removed transcript_provider import - not needed for 8-K only extraction
 from guidance_extractor import (
     extract_guidance, extract_transcript_guidance, 
     process_guidance_table
@@ -134,8 +134,169 @@ with main_tab1:
     st.subheader("Time Period")
     year_input = st.text_input("How many years back to search for filings? (Leave blank for most recent only)", "")
     quarter_input = st.text_input("OR enter specific quarter (e.g., 2Q25, Q4FY24)", "")
+    
+    # Robust CIK/ticker parsing
+    user_input = ticker_or_cik.strip().upper()
+    cik = None
+    ticker = None
 
-with main_tab2:
+    if is_cik_format(user_input):
+        cik = user_input
+        ticker = get_ticker_from_cik(cik)
+        if ticker:
+            st.info(f"Using CIK {cik} for ticker {ticker}")
+        else:
+            st.info(f"Using CIK {cik} (ticker not found in SEC ticker file; will proceed with CIK)")
+    elif user_input.isalnum():
+        ticker = user_input
+        cik = lookup_cik(ticker)
+        if cik:
+            st.info(f"Using ticker {ticker} (CIK: {cik})")
+        else:
+            st.error("CIK not found for ticker or input is not a valid CIK.")
+            st.stop()
+    else:
+        st.error("Please enter a valid ticker (e.g., MSFT) or 10-digit CIK (e.g., 0000789019).")
+        st.stop()
+
+    if st.button("Extract Guidance", type="primary"):
+        model_id = openai_models[selected_model]
+        client = OpenAI(api_key=openai_key)
+        st.info(f"Using OpenAI model: {selected_model}")
+        
+        all_results = []
+        
+        # SEC 8-K Processing - Only data source
+        st.subheader("Processing SEC 8-K Filings")
+        
+        if quarter_input.strip():
+            accessions = get_accessions(cik, ticker, specific_quarter=quarter_input.strip())
+            if not accessions:
+                st.warning(f"No 8-K filings found for {quarter_input}. Please check the format (e.g., 2Q25, Q4FY24).")
+        elif year_input.strip():
+            try:
+                years_back = int(year_input.strip())
+                accessions = get_accessions(cik, ticker, years_back=years_back)
+            except ValueError:
+                st.error("Invalid year input. Must be a number.")
+                accessions = []
+        else:
+            accessions = get_accessions(cik, ticker)
+
+        if accessions:
+            links = get_ex99_1_links(cik, accessions)
+            
+            for date_str, acc, url in links:
+                st.write(f"Processing {url}")
+                try:
+                    headers = {"User-Agent": st.secrets.get('SEC_USER_AGENT', 'Your Name Contact@domain.com')}
+                    html = requests.get(url, headers=headers, timeout=30).text
+                    soup = BeautifulSoup(html, "html.parser")
+                    text = soup.get_text(" ", strip=True)
+                    guidance_paragraphs, found_guidance = find_guidance_paragraphs(text)
+
+                    if found_guidance:
+                        table = extract_guidance(guidance_paragraphs, ticker, client, model_id)
+                        
+                        df = process_guidance_table(table, "SEC 8-K", client, model_id)
+                        if df is not None and not df.empty and len(df) > 0:
+                            df["filing_date"] = date_str
+                            df["filing_url"] = url
+                            all_results.append(df)
+                            st.success(f"Guidance extracted from this 8-K.")
+                            st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
+                        else:
+                            st.warning(f"No guidance extracted from {url}")
+                    else:
+                        st.info(f"No guidance paragraphs found in this 8-K. Skipping.")
+                        
+                except Exception as e:
+                    st.error(f"Could not process: {url}. Error: {str(e)}")
+        
+        # Results processing
+        if all_results:
+            combined = pd.concat(all_results, ignore_index=True)
+            
+            # Display rename mapping for better column names
+            display_rename = {
+                'metric': 'Metric',
+                'value_or_range': 'Value/Range',
+                'period': 'Period',
+                'period_type': 'Period Type',
+                'low': 'Low',
+                'high': 'High',
+                'average': 'Average',
+                'filing_date': 'Filing Date',
+                'filing_url': 'Source'
+            }
+            
+            # Preview table
+            st.subheader("Preview of Extracted Guidance")
+            display_cols = ['metric', 'value_or_range', 'period', 'period_type', 'low', 'average', 'high', 'filing_date', 'source_type']
+            display_df = combined[display_cols] if all(col in combined.columns for col in display_cols) else combined
+            display_df = display_df.rename(columns={c: display_rename.get(c, c) for c in display_df.columns})
+            st.dataframe(display_df, use_container_width=True)
+            
+            # Check for duplicates and highlight them
+            duplicate_indices = detect_duplicates(combined, client, model_id)
+            
+            if duplicate_indices:
+                st.warning(f"⚠️ Found {len(duplicate_indices)} duplicate guidance entries highlighted in yellow.")
+                
+                # Display dataframe with duplicate highlighting
+                styled_df = highlight_duplicates(combined, duplicate_indices)
+                st.dataframe(styled_df, use_container_width=True)
+            
+            # Always show download - no duplicate resolution needed
+            st.success("✅ Results ready for download!")
+            
+            # Create Excel download with duplicate highlighting
+            excel_buffer = BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                # Reorder columns to flip filing_date and source_type
+                column_order = list(combined.columns)
+                if 'filing_date' in column_order and 'source_type' in column_order:
+                    filing_date_idx = column_order.index('filing_date')
+                    source_type_idx = column_order.index('source_type')
+                    column_order[filing_date_idx], column_order[source_type_idx] = column_order[source_type_idx], column_order[filing_date_idx]
+                
+                combined_reordered = combined[column_order]
+                combined_reordered.to_excel(writer, sheet_name='Guidance_Data', index=False)
+                
+                # Apply formatting to Excel
+                from openpyxl.styles import PatternFill, Alignment
+                worksheet = writer.sheets['Guidance_Data']
+                
+                # Center align columns starting from column E (skip A, B, C, D)
+                center_alignment = Alignment(horizontal='center')
+                for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row, min_col=5, max_col=worksheet.max_column):
+                    for cell in row:
+                        cell.alignment = center_alignment
+                
+                # Apply highlighting to duplicates in Excel
+                if duplicate_indices:
+                    yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
+                    
+                    for idx in duplicate_indices:
+                        # Excel rows are 1-indexed and we need to account for header
+                        excel_row = idx + 2
+                        for col in range(1, len(combined.columns) + 1):
+                            worksheet.cell(row=excel_row, column=col).fill = yellow_fill
+            
+            excel_buffer.seek(0)  # Reset buffer position
+            
+            st.download_button(
+                "📥 Download Excel",
+                data=excel_buffer.getvalue(),
+                file_name=f"{ticker}_guidance_output.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.warning("No guidance found in any processed documents.")
+
+# Remove document management tab completely
+if False:  # Disabled document management
+    with main_tab2:
     st.header("Document Management")
     
     # Document Management Section
