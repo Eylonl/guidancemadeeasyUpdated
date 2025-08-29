@@ -155,7 +155,13 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
             
             # Get specific transcript
             try:
-                transcript_df = transcripts.get_transcript(year_int, quarter_int)
+                # Wrap the transcript fetching to catch defeatbeta-api errors
+                try:
+                    transcript_df = transcripts.get_transcript(year_int, quarter_int)
+                except Exception as api_error:
+                    # If defeatbeta API has internal errors, skip to fallback
+                    st.warning(f"DefeatBeta API internal error: {str(api_error)}")
+                    return fetch_transcript_apininjas(ticker, year, quarter)
                 
                 # Convert structured data to text format
                 transcript_text = ""
@@ -164,15 +170,20 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
                     content = row.get('content', '')
                     transcript_text += f"{speaker}: {content}\n\n"
                 
-                # Get metadata from transcripts list
-                transcripts_list = transcripts.get_transcripts_list()
-                matching_transcript = transcripts_list[
-                    (transcripts_list['fiscal_year'] == year_int) & 
-                    (transcripts_list['fiscal_quarter'] == quarter_int)
-                ]
+                # Get metadata from transcripts list with error handling
+                try:
+                    transcripts_list = transcripts.get_transcripts_list()
+                    matching_transcript = transcripts_list[
+                        (transcripts_list['fiscal_year'] == year_int) & 
+                        (transcripts_list['fiscal_quarter'] == quarter_int)
+                    ]
+                except Exception as metadata_error:
+                    st.warning(f"Could not fetch transcript metadata: {str(metadata_error)}")
+                    # Continue without metadata
+                    matching_transcript = None
                 
                 metadata = {}
-                if not matching_transcript.empty:
+                if matching_transcript is not None and not matching_transcript.empty:
                     report_date = matching_transcript['report_date'].iloc[0]
                     # Ensure the date is in string format for consistency
                     if hasattr(report_date, 'strftime'):
@@ -195,17 +206,25 @@ def fetch_transcript_defeatbeta(ticker, year=None, quarter=None):
                 st.write("DefeatBeta API failed, trying APINinjas fallback...")
                 return fetch_transcript_apininjas(ticker, year, quarter)
         else:
-            # Get most recent transcript
-            transcripts_list = transcripts.get_transcripts_list()
-            if transcripts_list.empty:
-                return None, f"No transcripts found for {ticker}", None
-            
-            # Get the most recent transcript (last row)
-            latest = transcripts_list.iloc[-1]
+            # Get most recent transcript with error handling
+            try:
+                transcripts_list = transcripts.get_transcripts_list()
+                if transcripts_list.empty:
+                    return None, f"No transcripts found for {ticker}", None
+                
+                # Get the most recent transcript (last row)
+                latest = transcripts_list.iloc[-1]
+            except Exception as list_error:
+                st.warning(f"DefeatBeta API error getting transcript list: {str(list_error)}")
+                return fetch_transcript_apininjas(ticker, None, None)
             latest_year = latest['fiscal_year']
             latest_quarter = latest['fiscal_quarter']
             
-            transcript_df = transcripts.get_transcript(latest_year, latest_quarter)
+            try:
+                transcript_df = transcripts.get_transcript(latest_year, latest_quarter)
+            except Exception as transcript_error:
+                st.warning(f"DefeatBeta API error getting transcript: {str(transcript_error)}")
+                return fetch_transcript_apininjas(ticker, None, None)
             
             # Convert structured data to text format
             transcript_text = ""
