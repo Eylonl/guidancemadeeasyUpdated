@@ -28,7 +28,8 @@ from duplicate_handler import (
 )
 from supabase_store import (
     upload_user_document, get_uploaded_documents, 
-    download_document, delete_document, get_supabase_config
+    download_document, delete_document, get_supabase_config,
+    increment_app_usage_counter
 )
 from document_tagger import extract_document_metadata, extract_text_from_file, validate_and_confirm_metadata
 
@@ -64,6 +65,9 @@ def is_cik_format(s):
 st.set_page_config(page_title="Enhanced SEC 8-K & Transcript Guidance Extractor", layout="centered")
 st.title("Enhanced SEC 8-K & Transcript Guidance Extractor")
 st.markdown("**Extract Guidance from SEC filings and Earnings Call Transcripts with AI.**")
+
+# Increment usage counter every time the app runs
+increment_app_usage_counter()
 
 # API Key Management with Password Protection
 st.sidebar.header("🔐 API Configuration")

@@ -295,3 +295,25 @@ def upload_user_document(ticker: str, year: int, quarter: str,
         "sha256": file_hash,
         "database_result": result
     }
+
+def increment_app_usage_counter():
+    """Increment the app usage counter in Supabase"""
+    try:
+        sb = get_client()
+        
+        # Try to get existing counter
+        result = sb.table("app_usage_stats").select("*").eq("stat_name", "total_runs").execute()
+        
+        if result.data:
+            # Counter exists, increment it
+            current_count = result.data[0]["count"]
+            new_count = current_count + 1
+            sb.table("app_usage_stats").update({"count": new_count}).eq("stat_name", "total_runs").execute()
+        else:
+            # Counter doesn't exist, create it
+            sb.table("app_usage_stats").insert({"stat_name": "total_runs", "count": 1}).execute()
+            
+    except Exception as e:
+        # Silently fail - we don't want to break the app if counter fails
+        print(f"Failed to increment usage counter: {str(e)}")
+        pass
