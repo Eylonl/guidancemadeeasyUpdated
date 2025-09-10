@@ -44,12 +44,15 @@ def get_fiscal_year_end(ticker, cik):
                 month = int(fiscal_year_end[:2])
                 day = int(fiscal_year_end[2:])
                 month_name = datetime(2000, month, 1).strftime('%B')
-                st.success(f"Retrieved fiscal year end for {ticker}: {month_name} {day}")
+                with st.expander("📊 Fiscal Year End Detection", expanded=False):
+                    st.success(f"Retrieved fiscal year end for {ticker}: {month_name} {day}")
                 return month, day
-        st.warning(f"Could not determine fiscal year end for {ticker} from SEC data. Using December 31 (calendar year).")
+        with st.expander("⚠️ Fiscal Year End Warning", expanded=False):
+            st.warning(f"Could not determine fiscal year end for {ticker} from SEC data. Using December 31 (calendar year).")
         return 12, 31
     except Exception as e:
-        st.warning(f"Error retrieving fiscal year end: {str(e)}. Using December 31 (calendar year).")
+        with st.expander("⚠️ Fiscal Year End Error", expanded=False):
+            st.warning(f"Error retrieving fiscal year end: {str(e)}. Using December 31 (calendar year).")
         return 12, 31
 
 def generate_fiscal_quarters(fiscal_year_end_month):
@@ -103,11 +106,12 @@ def get_fiscal_dates(ticker, quarter_num, year_num, fiscal_year_end_month, fisca
     quarter_period = f"Q{quarter_num} FY{year_num}"
     period_description = f"{start_date.strftime('%B %d, %Y')} to {end_date.strftime('%B %d, %Y')}"
     expected_report = f"~{report_start.strftime('%B %d, %Y')} to {report_end.strftime('%B %d, %Y')}"
-    st.write(f"Fiscal year ends in {datetime(2000, fiscal_year_end_month, 1).strftime('%B')} {fiscal_year_end_day}")
-    st.write(f"Quarter {quarter_num} spans: {datetime(2000, start_month, 1).strftime('%B')}-{datetime(2000, end_month, 1).strftime('%B')}")
-    st.write("All quarters for this fiscal pattern:")
-    for q, q_info in quarters.items():
-        st.write(f"Q{q}: {datetime(2000, q_info['start_month'], 1).strftime('%B')}-{datetime(2000, q_info['end_month'], 1).strftime('%B')}")
+    with st.expander("📅 Fiscal Quarter Information", expanded=False):
+        st.write(f"Fiscal year ends in {datetime(2000, fiscal_year_end_month, 1).strftime('%B')} {fiscal_year_end_day}")
+        st.write(f"Quarter {quarter_num} spans: {datetime(2000, start_month, 1).strftime('%B')}-{datetime(2000, end_month, 1).strftime('%B')}")
+        st.write("All quarters for this fiscal pattern:")
+        for q, q_info in quarters.items():
+            st.write(f"Q{q}: {datetime(2000, q_info['start_month'], 1).strftime('%B')}-{datetime(2000, q_info['end_month'], 1).strftime('%B')}")
     return {
         'quarter_period': quarter_period,
         'start_date': start_date,
@@ -131,7 +135,8 @@ def get_accessions(cik, ticker, years_back=None, specific_quarter=None):
     
     if years_back:
         cutoff = datetime.today() - timedelta(days=(365 * years_back) + 91.25)
-        st.write(f"Looking for filings from the past {years_back} years plus 1 quarter (from {cutoff.strftime('%Y-%m-%d')} to present)")
+        with st.expander("🔍 Filing Search Parameters", expanded=False):
+            st.write(f"Looking for filings from the past {years_back} years plus 1 quarter (from {cutoff.strftime('%Y-%m-%d')} to present)")
         for form, date_str, accession in zip(filings["form"], filings["filingDate"], filings["accessionNumber"]):
             if form == "8-K":
                 date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -149,18 +154,20 @@ def get_accessions(cik, ticker, years_back=None, specific_quarter=None):
             fiscal_info = get_fiscal_dates(ticker, quarter_num, year_num, fiscal_year_end_month, fiscal_year_end_day)
             if not fiscal_info:
                 return []
-            st.write(f"Looking for {ticker} {fiscal_info['quarter_period']} filings")
-            st.write(f"Fiscal quarter period: {fiscal_info['period_description']}")
-            st.write(f"Expected earnings reporting window: {fiscal_info['expected_report']}")
-            start_date = fiscal_info['report_start'] - timedelta(days=15)
-            end_date = fiscal_info['report_end'] + timedelta(days=15)
-            st.write(f"Searching for filings between: {start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}")
+            with st.expander("🔍 Specific Quarter Search", expanded=False):
+                st.write(f"Looking for {ticker} {fiscal_info['quarter_period']} filings")
+                st.write(f"Fiscal quarter period: {fiscal_info['period_description']}")
+                st.write(f"Expected earnings reporting window: {fiscal_info['expected_report']}")
+                start_date = fiscal_info['report_start'] - timedelta(days=15)
+                end_date = fiscal_info['report_end'] + timedelta(days=15)
+                st.write(f"Searching for filings between: {start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}")
             for form, date_str, accession in zip(filings["form"], filings["filingDate"], filings["accessionNumber"]):
                 if form == "8-K":
                     date = datetime.strptime(date_str, "%Y-%m-%d")
                     if start_date <= date <= end_date:
                         accessions.append((accession, date_str))
-                        st.write(f"Found filing from {date_str}: {accession}")
+                        with st.expander("📄 Found Filing", expanded=False):
+                            st.write(f"Found filing from {date_str}: {accession}")
     else:
         # Default: auto-detect most recent quarter and search for that specific quarter's earnings
         current_date = datetime.today()
@@ -192,25 +199,29 @@ def get_accessions(cik, ticker, years_back=None, specific_quarter=None):
             quarter_num = 4
             year_num -= 1
         
-        st.write(f"Auto-detecting most recent quarter: Q{quarter_num} {year_num}")
+        with st.expander("🤖 Auto-Detection Results", expanded=False):
+            st.write(f"Auto-detecting most recent quarter: Q{quarter_num} {year_num}")
         
         # Use the quarter-based search logic
         fiscal_info = get_fiscal_dates(ticker, quarter_num, year_num, fiscal_year_end_month, fiscal_year_end_day)
         if fiscal_info:
-            st.write(f"Looking for {ticker} {fiscal_info['quarter_period']} filings")
-            st.write(f"Expected earnings reporting window: {fiscal_info['expected_report']}")
-            start_date = fiscal_info['report_start'] - timedelta(days=15)
-            end_date = fiscal_info['report_end'] + timedelta(days=15)
-            st.write(f"Searching for filings between: {start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}")
+            with st.expander("🔍 Auto-Detected Quarter Search", expanded=False):
+                st.write(f"Looking for {ticker} {fiscal_info['quarter_period']} filings")
+                st.write(f"Expected earnings reporting window: {fiscal_info['expected_report']}")
+                start_date = fiscal_info['report_start'] - timedelta(days=15)
+                end_date = fiscal_info['report_end'] + timedelta(days=15)
+                st.write(f"Searching for filings between: {start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}")
             for form, date_str, accession in zip(filings["form"], filings["filingDate"], filings["accessionNumber"]):
                 if form == "8-K":
                     date = datetime.strptime(date_str, "%Y-%m-%d")
                     if start_date <= date <= end_date:
                         accessions.append((accession, date_str))
-                        st.write(f"Found filing from {date_str}: {accession}")
+                        with st.expander("📄 Found Filing", expanded=False):
+                            st.write(f"Found filing from {date_str}: {accession}")
     
     if accessions:
-        st.write(f"Found {len(accessions)} relevant 8-K filings")
+        with st.expander("✅ Filing Search Results", expanded=False):
+            st.write(f"Found {len(accessions)} relevant 8-K filings")
     else:
         available_dates = []
         for form, date_str in zip(filings["form"], filings["filingDate"]):
@@ -218,11 +229,12 @@ def get_accessions(cik, ticker, years_back=None, specific_quarter=None):
                 available_dates.append(date_str)
         if available_dates:
             available_dates.sort(reverse=True)
-            st.write("All available 8-K filing dates:")
-            for date in available_dates[:15]:
-                st.write(f"- {date}")
-            if len(available_dates) > 15:
-                st.write(f"... and {len(available_dates) - 15} more")
+            with st.expander("📋 Available 8-K Filing Dates", expanded=False):
+                st.write("All available 8-K filing dates:")
+                for date in available_dates[:15]:
+                    st.write(f"- {date}")
+                if len(available_dates) > 15:
+                    st.write(f"... and {len(available_dates) - 15} more")
     return accessions
 
 def is_earnings_release(url, headers):
@@ -230,7 +242,8 @@ def is_earnings_release(url, headers):
     try:
         # Skip iXBRL files that cause redirect issues
         if 'ixbrl' in url.lower():
-            st.write(f"Skipped iXBRL file: {url}")
+            with st.expander("⏭️ Skipped Files", expanded=False):
+                st.write(f"Skipped iXBRL file: {url}")
             return False
             
         # Get a sample of the document content with redirect handling
@@ -238,7 +251,8 @@ def is_earnings_release(url, headers):
         
         # Handle redirects manually to avoid infinite loops
         if res.status_code in [301, 302, 303, 307, 308]:
-            st.write(f"Skipped redirected URL: {url}")
+            with st.expander("⏭️ Skipped Files", expanded=False):
+                st.write(f"Skipped redirected URL: {url}")
             return False
             
         if res.status_code != 200:
@@ -275,7 +289,8 @@ def is_earnings_release(url, headers):
         return keyword_count >= 3 and (is_likely_earnings or not has_strong_exclusions)
         
     except Exception as e:
-        st.write(f"Error validating earnings release {url}: {str(e)}")
+        with st.expander("❌ Validation Errors", expanded=False):
+            st.write(f"Error validating earnings release {url}: {str(e)}")
         return False
 
 def get_ex99_1_links(cik, accessions):
@@ -304,12 +319,14 @@ def get_ex99_1_links(cik, accessions):
                         
                         # Validate it's an earnings release
                         if is_earnings_release(exhibit_url, headers):
-                            st.write(f"✅ Validated earnings release: {exhibit_url}")
+                            with st.expander("✅ Validated Earnings Releases", expanded=False):
+                                st.write(f"✅ Validated earnings release: {exhibit_url}")
                             links.append((date_str, accession, exhibit_url))
                             found_exhibit = True
                             break
                         else:
-                            st.write(f"⏭️ Skipped non-earnings 8-K: {exhibit_url}")
+                            with st.expander("⏭️ Skipped Non-Earnings Files", expanded=False):
+                                st.write(f"⏭️ Skipped non-earnings 8-K: {exhibit_url}")
             
             # If no explicit 99.1, look for other exhibit files
             if not found_exhibit:
@@ -322,12 +339,14 @@ def get_ex99_1_links(cik, accessions):
                             
                             # Validate it's an earnings release
                             if is_earnings_release(exhibit_url, headers):
-                                st.write(f"✅ Validated earnings release: {exhibit_url}")
+                                with st.expander("✅ Validated Earnings Releases", expanded=False):
+                                    st.write(f"✅ Validated earnings release: {exhibit_url}")
                                 links.append((date_str, accession, exhibit_url))
                                 found_exhibit = True
                                 break
                             else:
-                                st.write(f"⏭️ Skipped non-earnings 8-K: {exhibit_url}")
+                                with st.expander("⏭️ Skipped Non-Earnings Files", expanded=False):
+                                    st.write(f"⏭️ Skipped non-earnings 8-K: {exhibit_url}")
             
             # Try common patterns as fallback
             if not found_exhibit:
@@ -350,16 +369,19 @@ def get_ex99_1_links(cik, accessions):
                         if test_res.status_code == 200:
                             # Validate it's an earnings release
                             if is_earnings_release(test_url, headers):
-                                st.write(f"✅ Validated earnings release: {test_url}")
+                                with st.expander("✅ Validated Earnings Releases", expanded=False):
+                                    st.write(f"✅ Validated earnings release: {test_url}")
                                 links.append((date_str, accession, test_url))
                                 found_exhibit = True
                                 break
                             else:
-                                st.write(f"⏭️ Skipped non-earnings 8-K: {test_url}")
+                                with st.expander("⏭️ Skipped Non-Earnings Files", expanded=False):
+                                    st.write(f"⏭️ Skipped non-earnings 8-K: {test_url}")
                     except:
                         continue
         except Exception as e:
-            st.write(f"Error processing accession {accession}: {str(e)}")
+            with st.expander("❌ Processing Errors", expanded=False):
+                st.write(f"Error processing accession {accession}: {str(e)}")
             continue
     return links
 
