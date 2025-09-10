@@ -214,7 +214,7 @@ with main_tab2:
             
             # Step 1: Analyze documents
             if not st.session_state.batch_analyzed:
-                if st.button("🔍 Analyze Documents", type="primary", width="stretch"):
+                if st.button("🔍 Analyze Documents", type="primary", use_container_width=True):
                     # Validate ticker input first
                     if not upload_ticker or len(upload_ticker.strip()) < 1:
                         st.error("❌ Please enter a ticker symbol before analyzing documents")
@@ -364,7 +364,7 @@ with main_tab2:
                     # Upload buttons
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("✅ Upload All Documents", type="primary", width="stretch"):
+                        if st.button("✅ Upload All Documents", type="primary", use_container_width=True):
                             # Perform actual upload
                             progress_bar = st.progress(0)
                             status_text = st.empty()
@@ -422,7 +422,7 @@ with main_tab2:
                             # st.rerun()
                     
                     with col2:
-                        if st.button("🔄 Re-analyze", width="stretch"):
+                        if st.button("🔄 Re-analyze", use_container_width=True):
                             st.session_state.batch_analyzed = False
                             st.session_state.batch_documents = []
                             def reset_duplicate_state():
@@ -665,7 +665,7 @@ with main_tab1:
                                 df["filing_url"] = url
                                 all_results.append(df)
                                 st.success(f"Guidance extracted from this 8-K.")
-                                st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], width="stretch")
+                                st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
                             else:
                                 st.warning(f"No guidance extracted from {url}")
                         else:
@@ -722,7 +722,7 @@ with main_tab1:
                             df["filing_url"] = f"{source} Transcript"
                             all_results.append(df)
                             st.success(f"Guidance extracted from transcript.")
-                            st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], width="stretch")
+                            st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
             elif year_input.strip():
                 # Get transcripts for multiple quarters based on years back
                 try:
@@ -803,7 +803,7 @@ with main_tab1:
                                     df["filing_url"] = f"{source} Transcript {actual_quarter} {actual_year}"
                                     all_results.append(df)
                                     st.success(f"Guidance extracted from {actual_quarter} {actual_year} transcript.")
-                                    st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], width="stretch")
+                                    st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
                     
                     # Process the extra quarter at the end (Q4 of the year before the range)
                     extra_year = current_fiscal_year - (years_back + 1)
@@ -837,7 +837,7 @@ with main_tab1:
                                     df["filing_url"] = f"{source} Transcript {actual_quarter} {actual_year}"
                                     all_results.append(df)
                                     st.success(f"Guidance extracted from {actual_quarter} {actual_year} transcript.")
-                                    st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], width="stretch")
+                                    st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
                                     
                 except ValueError:
                     st.error("Invalid year input. Must be a number.")
@@ -861,7 +861,7 @@ with main_tab1:
                         df["filing_url"] = f"Most Recent {source} Transcript"
                         all_results.append(df)
                         st.success(f"Guidance extracted from transcript.")
-                        st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], width="stretch")
+                        st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
                     else:
                         st.warning("No guidance extracted from transcript.")
 
@@ -937,7 +937,7 @@ with main_tab1:
                                         df["filing_url"] = f"Uploaded: {doc.get('storage_path', 'Unknown')}"
                                         all_results.append(df)
                                         st.success(f"Guidance extracted from uploaded {doc['file_type']}")
-                                        st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], width="stretch")
+                                        st.dataframe(df[['metric', 'value_or_range', 'period', 'period_type']], use_container_width=True)
                                     else:
                                         st.warning(f"No guidance extracted from {doc['file_type']}")
                                 else:
@@ -975,7 +975,7 @@ with main_tab1:
             display_cols = ['metric', 'value_or_range', 'period', 'period_type', 'low', 'average', 'high', 'filing_date', 'source_type']
             display_df = combined[display_cols] if all(col in combined.columns for col in display_cols) else combined
             display_df = display_df.rename(columns={c: display_rename.get(c, c) for c in display_df.columns})
-            st.dataframe(display_df, width="stretch")
+            st.dataframe(display_df, use_container_width=True)
             
             # Check for duplicates and highlight them
             duplicate_indices = detect_duplicates(combined, client, model_id)
@@ -985,7 +985,7 @@ with main_tab1:
                 
                 # Display dataframe with duplicate highlighting
                 styled_df = highlight_duplicates(combined, duplicate_indices)
-                st.dataframe(styled_df, width="stretch")
+                st.dataframe(styled_df, use_container_width=True)
             
             # Always show download - no duplicate resolution needed
             st.success("✅ Results ready for download!")
@@ -1058,7 +1058,7 @@ if False:  # Disabled duplicate section
     display_cols = ['metric', 'value_or_range', 'period', 'period_type', 'low', 'average', 'high', 'filing_date', 'source_type']
     display_df = combined[display_cols] if all(col in combined.columns for col in display_cols) else combined
     display_df = display_df.rename(columns={c: display_rename.get(c, c) for c in display_df.columns})
-    st.dataframe(display_df, width="stretch")
+    st.dataframe(display_df, use_container_width=True)
     
     # Check for duplicates and highlight them
     duplicate_indices = detect_duplicates(combined, client, model_id)
@@ -1068,7 +1068,7 @@ if False:  # Disabled duplicate section
         
         # Display dataframe with duplicate highlighting
         styled_df = highlight_duplicates(combined, duplicate_indices)
-        st.dataframe(styled_df, width="stretch")
+        st.dataframe(styled_df, use_container_width=True)
     
     # Always show download - no duplicate resolution needed
     st.success("✅ Results ready for download!")
