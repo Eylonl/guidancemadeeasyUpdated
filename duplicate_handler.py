@@ -19,10 +19,9 @@ Here is the guidance data:
 {df_text}
 
 RULES FOR IDENTIFYING DUPLICATES:
-1. Only flag entries as duplicates if they have the SAME metric, period, and represent CONFLICTING values
+1. Only flag entries as duplicates if they have the SAME metric, period, filing date, and represent CONFLICTING values
 2. Do NOT flag entries as duplicates if they have identical values (e.g., 28.0% and 28% are the same)
-3. Do NOT flag entries as duplicates if they are from the same source and date
-4. Only flag when there are genuinely different guidance values for the same metric and period
+4. Only flag when there are genuinely different guidance values for the same metric, period, and filing date
 
 Return ONLY a Python list of row indices (numbers) that should be highlighted as duplicates.
 If no true duplicates exist, return an empty list: []
