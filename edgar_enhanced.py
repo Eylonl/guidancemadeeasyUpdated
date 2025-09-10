@@ -5,6 +5,8 @@ import streamlit as st
 import os
 import re
 
+# Force deployment refresh - all debug info consolidated into single expander
+
 def get_ticker_from_cik(cik):
     """Get ticker symbol from CIK for display purposes"""
     try:
