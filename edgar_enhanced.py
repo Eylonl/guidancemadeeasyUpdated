@@ -65,6 +65,8 @@ def generate_fiscal_quarters(fiscal_year_end_month):
             end_month = 12
         quarters[q] = {'start_month': start_month, 'end_month': end_month}
         current_month = (end_month % 12) + 1
+        if current_month == 0:
+            current_month = 12
     return quarters
 
 def get_fiscal_dates(ticker, quarter_num, year_num, fiscal_year_end_month, fiscal_year_end_day):
