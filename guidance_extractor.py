@@ -312,7 +312,8 @@ STANDARDIZATION RULES TO APPLY:
    - Pattern: \\([^)]*\\) but preserve (GAAP), (Non-GAAP), (Adjusted)
 
 4. Apply these standardized mappings where applicable:
-   - revenue/revenues/total revenue → Revenue
+   - ONLY for standalone terms: revenue/revenues → Revenue, total revenue → Total Revenue
+   - PRESERVE segment names: keep "Productivity and Business Processes Revenue", "Intelligent Cloud Revenue", etc. as-is
    - eps/earnings per share → EPS  
    - net income/net earnings → Net Income
    - ebitda → EBITDA
